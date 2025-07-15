@@ -1,0 +1,28 @@
+{
+  "name": "chrome-profile-manager",
+  "version": "1.0.0",
+  "scripts": {
+    "start": "concurrently \"npm run server\" \"npm run client\"",
+    "client": "cross-env PORT=8000 npm --prefix clientapp run dev",
+    "server": "node server.js",
+    "swagger": "node swagger.js"
+  },
+  "dependencies": {
+    "body-parser": "^2.2.0",
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "lodash": "^4.17.21",
+    "pg": "^8.16.3",
+    "playwright": "^1.54.1",
+    "puppeteer": "^24.12.1",
+    "puppeteer-core": "^24.12.1",
+    "sequelize": "^6.37.7",
+    "swagger-autogen": "^2.23.7",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "cross-env": "^7.0.3"
+  }
+}
