@@ -12,6 +12,7 @@ const app = express();
 const PORT = 8001;
 const profileDir = path.join(process.cwd(), 'profiles');
 const profileRoutes = require('./routes/profileRoutes');
+const contentRoutes = require('./routes/contentRoutes');
 
 if (!fs.existsSync(profileDir)) fs.mkdirSync(profileDir);
 
@@ -21,6 +22,7 @@ app.use(express.static('public'));
 
 app.use(bodyParser.json());
 app.use('/api/profiles', profileRoutes);
+app.use('/api/content', contentRoutes);
 
 const swaggerOutputPath = path.resolve(process.cwd(), "swagger-output.json");
 

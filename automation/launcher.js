@@ -2,6 +2,8 @@ const path = require('path');
 const fs = require('fs');
 const puppeteer = require('puppeteer-core');
 
+const { doLogin, checkSuspendedAcct} = require('./authCMC')
+const { generateContent } = require('../routes/contentOpenAI')
 async function launchProfile({
   name,
   url = 'https://example.com',
@@ -17,7 +19,7 @@ async function launchProfile({
     fs.mkdirSync(profilePath, { recursive: true });
   }
 
-  const browser = await puppeteer.launch({
+  let browser = await puppeteer.launch({
     headless: false,
     userDataDir: profilePath,
     executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', // adjust for your OS
@@ -28,7 +30,26 @@ async function launchProfile({
   });
 
   const page = await browser.newPage();
-  await page.goto(url);
+  await page.goto(url, { waitUntil: 'domcontentloaded' });
+
+  const loggedOn = await doLogin(page)
+  
+  if(!loggedOn){
+      await browser.close()
+  }
+
+  const suspended = await checkSuspendedAcct(page);
+  
+  if(suspended){
+    console.log('Suspended:', name);
+    await browser.close();
+  }
+
+  const postContent = await generateContent("write short content limited 500 text for current influencers like Mike Strategy, return content only limited 500 text, no extra content needed ")
+
+  console.log('postContent', postContent)
+
+
 
   return browser;
 }

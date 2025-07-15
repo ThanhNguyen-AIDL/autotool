@@ -12,6 +12,7 @@ import styles from './ProfileList.module.css';
 
 
 import EditProfileModal from '../EditProfileModal/EditProfileModal';
+import ContentWriter from '../ContentWriter/ContentWriter';
 
 
 export default function ProfileList() {
@@ -82,6 +83,8 @@ export default function ProfileList() {
           onChange={(e) => setLaunchURL(e.target.value)}
         />
       </div>
+
+      <ContentWriter />
 
       <table className={styles.table}>
         <thead>

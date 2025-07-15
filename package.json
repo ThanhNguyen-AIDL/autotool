@@ -8,10 +8,17 @@
     "swagger": "node swagger.js"
   },
   "dependencies": {
+    "@azure-rest/ai-inference": "latest",
+    "@azure/core-auth": "latest",
+    "@azure/core-sse": "latest",
+
+    "axios": "^1.10.0",
     "body-parser": "^2.2.0",
     "cors": "^2.8.5",
+    "dotenv": "^17.2.0",
     "express": "^5.1.0",
     "lodash": "^4.17.21",
+    "openai": "^5.9.0",
     "pg": "^8.16.3",
     "playwright": "^1.54.1",
     "puppeteer": "^24.12.1",
