@@ -37,6 +37,8 @@ const PromptManager = () => {
 
     try {
         await createPrompt(form);
+        setForm({ ...form, name: "" });
+
         fetchPrompts();
     } catch (err) {
       setError(err.message);
