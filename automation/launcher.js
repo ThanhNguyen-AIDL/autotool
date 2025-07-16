@@ -2,10 +2,10 @@ const path = require('path');
 const fs = require('fs');
 const puppeteer = require('puppeteer-core');
 
-const { doLogin, checkSuspendedAcct} = require('./authCMC')
-const { generateContent } = require('../routes/contentOpenAI')
+const { doLogin, checkSuspendedAcct, postComment} = require('./authCMC')
 async function launchProfile({
   name,
+  postContent = "",
   url = 'https://example.com',
   extensionRelativePath = 'extensions/unpacked-metamask',
   webstoreUrl = 'https://chromewebstore.google.com/detail/metamask/nkbihfbeogaeaoehlefnkodbefgpgknn?hl=en-US&utm_source=ext_sidebar',
@@ -45,11 +45,10 @@ async function launchProfile({
     await browser.close();
   }
 
-  const postContent = await generateContent("write short content limited 500 text for current influencers like Mike Strategy, return content only limited 500 text, no extra content needed ")
-
-  console.log('postContent', postContent)
+  await page.goto("https://coinmarketcap.com/community", { waitUntil: 'domcontentloaded' });
 
 
+  await postComment(page, postContent)
 
   return browser;
 }

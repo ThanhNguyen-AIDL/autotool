@@ -1,10 +1,6 @@
 
-async function findByText(page, text) {
-    return await page.evaluateHandle((text) => {
-        const elements = Array.from(document.querySelectorAll('*'));
-        return elements.find(el => el.textContent.includes(text));
-    }, text);
-}
+const trendingTokens = ['ETH', 'SOL', 'DOGE', 'SHIB']; // example
+const repostText = ['Nice project!', 'Check this out!', 'Bullish on this.', '🔥🔥🔥'];
 
 
 async function canLogin(page) {
@@ -86,11 +82,64 @@ async function checkSuspendedAcct(page) {
   }
 }
 
+async function postComment(page, postContent) {
+    let editorInputsCommunity, baseEditor, editElement;
+
+    try {
+        // Wait for ".editor.inputs.community"
+        editorInputsCommunity = await page.waitForSelector('.editor.inputs.communityHomepage', { timeout: 10000 });
+        if (!editorInputsCommunity) {
+        throw new Error("Could not find element with classes 'editor inputs community'.");
+        }
+    } catch (e) {
+        throw new Error("Could not find element with classes 'editor inputs community'.");
+    }
+
+    try {
+        // Find child: .base-editor
+        baseEditor = await editorInputsCommunity.$('.base-editor');
+        if (!baseEditor) throw new Error("Could not find '.base-editor' inside editor inputs");
+
+        // Find [role="textbox"] inside baseEditor
+        editElement = await baseEditor.$('[role="textbox"]');
+        if (!editElement) throw new Error("Could not find [role='textbox']");
+
+        await page.waitForTimeout(2000);
+
+        // Random sample 2 coins
+        const coins = shuffle(trendingTokens).slice(0, 2);
+        for (const coin of coins) {
+        await editElement.type(`$${coin}`);
+        await page.waitForTimeout(2000);
+        await editElement.press('Enter');
+        }
+
+        await editElement.type(postContent);
+
+    } catch (e) {
+        throw new Error(`Failed to enter text: ${e.message}`);
+    }
+
+}
+
+// Helper: random array element
+function randomChoice(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+// Helper: shuffle array
+function shuffle(array) {
+  return array
+    .map((value) => ({ value, sort: Math.random() }))
+    .sort((a, b) => a.sort - b.sort)
+    .map(({ value }) => value);
+}
 
 
 
 module.exports = {
     canLogin,
     doLogin,
-    checkSuspendedAcct
+    checkSuspendedAcct,
+    postComment
 }

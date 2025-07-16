@@ -1,22 +1,28 @@
 
 import React, { useState } from 'react';
 import {getContent} from "@/services/contentService"
+import { useWriterText } from '@/redux/utils/contentWriterUtils';
 const ContentWriter = () => {
-  const [prompt, setPrompt] = useState('');
-  const [response, setResponse] = useState('');
   const [loading, setLoading] = useState(false);
-
+  const {
+      writerResponse,
+      setWriterResponse,
+      promtInput, 
+      setWriterPromt
+    } = useWriterText()
+  debugger
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setResponse('');
+    setWriterResponse('');
 
     try {
-      const res = await getContent(prompt);
+      const res = await getContent(promtInput);
       const data = await res?.data?.data;
-      setResponse(data || '');
+      debugger
+      setWriterResponse(data)
     } catch (err) {
-      setResponse('⚠️ Error: ' + err.message);
+      setWriterResponse('⚠️ Error: ' + err.message);
     } finally {
       setLoading(false);
     }
@@ -29,8 +35,8 @@ const ContentWriter = () => {
         <input
           type="text"
           id="prompt"
-          value={prompt}
-          onChange={(e) => setPrompt(e.target.value)}
+          value={promtInput}
+          onChange={(e) => setWriterPromt(e.target.value)}
           style={{ width: '100%', padding: 8, marginTop: 8 }}
           placeholder="e.g. Write a bedtime story..."
           required
@@ -40,10 +46,10 @@ const ContentWriter = () => {
         </button>
       </form>
 
-      {response && (
+      {writerResponse && (
         <div style={{ marginTop: 20, padding: 10, background: '#f9f9f9', borderRadius: 6 }}>
           <strong>Response:</strong>
-          <p>{response}</p>
+          <p>{writerResponse}</p>
         </div>
       )}
     </div>

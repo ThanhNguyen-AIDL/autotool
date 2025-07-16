@@ -34,10 +34,10 @@ if (fs.existsSync(swaggerOutputPath)) {
 }
 
 app.post('/api/launch', async (req, res) => {
-  const { name, url } = req.body;
+  const { name, url, postContent } = req.body;
 
   try {
-    await launchProfile({ name, url });
+    await launchProfile({ name, url , postContent});
 
     res.json({ success: true });
   } catch (e) {

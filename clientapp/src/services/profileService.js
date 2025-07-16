@@ -9,8 +9,8 @@ export const createProfile = (formData) =>
 export const deleteProfile = (name) =>
   API.post(`/api/delete`, { name });
 
-export const launchProfile = (name, url) =>
-  API.post(`/api/launch`, { name, url });
+export const launchProfile = (name, url, postContent) =>
+  API.post(`/api/launch`, { name, url , postContent});
 
 
 export const updateProfile = (id, data) => {
