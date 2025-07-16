@@ -3,6 +3,10 @@ import API from './api';
 export const getProfiles = () =>
   API.get(`/api/profiles`).then(res => res.data);
 
+
+export const getCompunterNames = () =>
+  API.get(`/api/profiles/computernames`).then(res => res.data);
+
 export const createProfile = (formData) =>
   API.post(`/api/profiles`, formData);
 

@@ -2,6 +2,15 @@ const express = require('express');
 const router = express.Router();
 const ProfileRepo = require('../repositories/ProfileRepository.js');
 
+router.get('/computernames', async (req, res) => {
+    try {
+      const list = await ProfileRepo.getCompunterNames();
+      res.json(list);
+    } catch (error) {
+        res.status(500).json({ error: "Error occurs: " + error.message });
+    }
+});
+
 router.get('/', async (req, res) => {
     try {
       const profiles = await ProfileRepo.getAll();
@@ -11,6 +20,7 @@ router.get('/', async (req, res) => {
         res.status(500).json({ error: "Error occurs: " + error.message });
     }
 });
+
 
 router.post('/', async (req, res) => {
   try {

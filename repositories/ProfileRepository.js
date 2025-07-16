@@ -8,6 +8,14 @@ class ProfileRepository {
   }
 
 
+  async getProfileByName(computerName, periodRange = 100 ) {
+    
+
+
+  }
+
+
+
   async create(data) {
     return await Profile.create(data);
   }
@@ -22,6 +30,21 @@ class ProfileRepository {
 
   async delete(id) {
     return await Profile.destroy({ where: { id } });
+  }
+
+  async getCompunterNames(){
+    const owners = await Profile.findAll({
+        attributes: ['owner'],
+        where: {
+          owner: {
+            [Sequelize.Op.not]: null
+          }
+        },
+        group: ['owner'],
+        raw: true
+    });
+
+    return owners.map((row) => row.owner);
   }
 
 }
