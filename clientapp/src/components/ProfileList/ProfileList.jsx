@@ -13,6 +13,7 @@ import styles from './ProfileList.module.css';
 
 import EditProfileModal from '../EditProfileModal/EditProfileModal';
 import ContentWriter from '../ContentWriter/ContentWriter';
+import { useWriterText } from '@/redux/utils/contentWriterUtils';
 
 
 export default function ProfileList() {
@@ -20,7 +21,7 @@ export default function ProfileList() {
   const [newName, setNewName] = useState('');
   const [launchURL, setLaunchURL] = useState('https://coinmarketcap.com');
   const [editingProfile, setEditingProfile] = useState(null);
-
+  const {writerResponse} = useWriterText()
   const [form, setForm] = useState({
     name: '',
     auth: '',
@@ -57,7 +58,8 @@ export default function ProfileList() {
   };
 
   const handleLaunch = async (name) => {
-    await launchProfile(name, launchURL);
+    debugger
+    await launchProfile(name, launchURL, writerResponse);
   };
 
   return (

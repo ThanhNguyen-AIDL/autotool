@@ -1,5 +1,5 @@
 
-const trendingTokens = ['ETH', 'SOL', 'DOGE', 'SHIB']; // example
+const trendingTokens = ['$ETH', '$SOL', '$DOGE', '$SHIB', '$BTC']; // example
 const repostText = ['Nice project!', 'Check this out!', 'Bullish on this.', '🔥🔥🔥'];
 
 
@@ -104,20 +104,32 @@ async function postComment(page, postContent) {
         editElement = await baseEditor.$('[role="textbox"]');
         if (!editElement) throw new Error("Could not find [role='textbox']");
 
-        await page.waitForTimeout(2000);
+        await new Promise(resolve => setTimeout(resolve, 3000));
 
         // Random sample 2 coins
+        await page.keyboard.press('Enter');
         const coins = shuffle(trendingTokens).slice(0, 2);
         for (const coin of coins) {
-        await editElement.type(`$${coin}`);
-        await page.waitForTimeout(2000);
-        await editElement.press('Enter');
+            await editElement.type(" ", { delay: 100 });
+            await editElement.type(coin, { delay: 100 });
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            await page.keyboard.press('Enter');
+            
         }
+        await page.keyboard.press('Enter');
+        await editElement.type(postContent, { delay: 50 });
 
-        await editElement.type(postContent);
+        const postButton = await page.evaluateHandle(() => {
+            const buttons = Array.from(document.querySelectorAll('button'));
+            return buttons.find(btn => btn.textContent.trim().toLowerCase() === 'post');
+        });
 
+        if (postButton) {
+            console.log('POST CLICKED');
+            await postButton.click();
+        }
     } catch (e) {
-        throw new Error(`Failed to enter text: ${e.message}`);
+        console.error(`Failed to enter text: ${e.message}`);
     }
 
 }
