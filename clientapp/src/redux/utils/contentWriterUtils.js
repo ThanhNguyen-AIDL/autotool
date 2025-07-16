@@ -5,14 +5,11 @@ export const useWriterText = () => {
     const dispatch = useDispatch();
   
     const { writerResponse, promtInput } = useSelector(state => state.writer);
-    debugger
     const setWriterResponse = async (text ) => {
-      debugger
         dispatch(setContentWriter(text));
         // await dispatch(fetchTokenDetail(pumpId)); // Initial fetch
     }
     const setWriterPromt = async (text ) => {
-      debugger
         dispatch(setPromtWriter(text));
         // await dispatch(fetchTokenDetail(pumpId)); // Initial fetch
     }

@@ -58,7 +58,6 @@ export default function ProfileList() {
   };
 
   const handleLaunch = async (name) => {
-    debugger
     await launchProfile(name, launchURL, writerResponse);
   };
 

@@ -37,7 +37,6 @@ const writerReducer = (state = initialState, action) => {
         
         
     };
-    debugger
 
     return handlers[action.type] ? handlers[action.type](state, action) : state;
 

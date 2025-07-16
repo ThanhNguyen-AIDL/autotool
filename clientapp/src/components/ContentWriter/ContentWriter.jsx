@@ -10,7 +10,6 @@ const ContentWriter = () => {
       promtInput, 
       setWriterPromt
     } = useWriterText()
-  debugger
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -19,7 +18,6 @@ const ContentWriter = () => {
     try {
       const res = await getContent(promtInput);
       const data = await res?.data?.data;
-      debugger
       setWriterResponse(data)
     } catch (err) {
       setWriterResponse('⚠️ Error: ' + err.message);
