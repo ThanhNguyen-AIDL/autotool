@@ -9,6 +9,10 @@ import { getContent } from '@/services/contentService';
 import React, { useEffect, useState, useRef } from 'react';
 import { postArticleCMC } from '@/services/cmcService';
 import { checkCooldown } from '@/services/cooldownService';
+import LogViewer from '../LogViewer/LogViewer';
+import { getLogsByName } from '@/services/logService';
+import { useLogManager } from '@/redux/utils/logUtitls';
+
 
 const TaskManager = () => {
     const [computerNames, setComputerNames] = useState([]);
@@ -20,6 +24,7 @@ const TaskManager = () => {
     const [isRunning, setIsRunning] = useState(false);
     const [intervalId, setIntervalId] = useState(null);
     const [intervalMinutes, setIntervalMinutes] = useState(10);
+    const logManager = useLogManager()
 
     // Refs to hold latest state
     const selectedCategoriesRef = useRef([]);
@@ -132,6 +137,10 @@ const TaskManager = () => {
             const nextIdx = (idx + 1) % selected.length;
             currentCategoryIndexRef.current = nextIdx;
             setCurrentCategoryIndex(nextIdx);
+
+            getLogsByName(logManager.selectedFile)
+                  .then(data => logManager.setLogRows(data))
+                  .catch(console.error)
         }
     };
 
@@ -256,7 +265,7 @@ const TaskManager = () => {
                             Stop Job
                         </button>
                     </div>
-
+                    <LogViewer/>
                 </div>
             )}
 

@@ -1,0 +1,59 @@
+
+  .logTable {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: monospace;
+  }
+
+  .logTable th,
+  .logTable td {
+    border: 1px solid #ccc;
+    padding: 8px 12px;
+    text-align: left;
+    vertical-align: top;
+  }
+
+  .logTable thead {
+    background-color: #f3f4f6;
+  }
+
+  .log-Table tbody tr:hover {
+    background-color: #f9fafb;
+  }
+
+  .detailsCell {
+    position: relative;
+    max-width: 800px;
+    white-space: wrap;
+    text-overflow: ellipsis;
+    cursor: pointer;
+  }
+
+  .detailsPreview {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 13px;
+  }
+
+  .detailsFull {
+    display: none;
+    position: absolute;
+    left: 0;
+    top: 100%;
+    margin-top: 4px;
+    padding: 8px;
+    background: #fff;
+    border: 1px solid #ccc;
+    white-space: pre-wrap;
+    max-width: 90vw;
+    max-height: 400px;
+    overflow: auto;
+    font-size: 13px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    z-index: 100;
+  }
+
+  .detailsCell:hover .detailsFull {
+    display: block;
+  }

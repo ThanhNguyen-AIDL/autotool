@@ -17,6 +17,7 @@ const promptCategory = require('./routes/promptCategoryRoutes');
 const promptInputRoutes = require('./routes/promptInputRoutes');
 const taskRoutes = require('./routes/taskRoutes');
 const cooldownRoutes = require('./routes/cooldownRoutes');
+const logRoutes = require('./routes/logsRoutes');
 
 if (!fs.existsSync(profileDir)) fs.mkdirSync(profileDir);
 
@@ -33,6 +34,7 @@ app.use('/api/promptCategory', promptCategory);
 app.use('/api/prompts', promptInputRoutes);
 app.use('/api/task', taskRoutes);
 app.use('/api/cooldown', cooldownRoutes);
+app.use('/api/logs', logRoutes);
 
 const swaggerOutputPath = path.resolve(process.cwd(), "swagger-output.json");
 
