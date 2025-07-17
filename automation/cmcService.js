@@ -3,11 +3,20 @@ const fs = require('fs');
 const puppeteer = require('puppeteer-core');
 
 const { doLogin, checkSuspendedAcct, postComment} = require('./authCMC')
-
+const {canExecute, markExecuted} = require('./cooldownManager')
+const logger = require('../middlewares/logger')
 async function doPostArticleCMC({
   name,
   postContent = "",
 }) {
+
+  if(!canExecute('doPostArticleCMC', 600)){
+    logger.info({message:"still cooldown CMC post"})
+    return
+  }
+
+  markExecuted("doPostArticleCMC");
+
   const profilePath = path.resolve(process.cwd(), 'profiles', name);
 
   // Ensure profile dir exists

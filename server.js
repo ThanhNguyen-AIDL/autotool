@@ -6,7 +6,7 @@ const cors = require('cors');
 const {launchProfile} = require('./automation/launcher')
 const bodyParser = require("body-parser");
 const swaggerUi = require("swagger-ui-express");
-
+const requestContextMiddleware = require('./middlewares/requestContextMiddleware')
 
 const app = express();
 const PORT = 8001;
@@ -22,6 +22,8 @@ if (!fs.existsSync(profileDir)) fs.mkdirSync(profileDir);
 app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
+app.use(requestContextMiddleware);
+
 
 app.use(bodyParser.json());
 app.use('/api/profiles', profileRoutes);
