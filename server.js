@@ -15,6 +15,7 @@ const profileRoutes = require('./routes/profileRoutes');
 const contentRoutes = require('./routes/contentRoutes');
 const promptCategory = require('./routes/promptCategoryRoutes');
 const promptInputRoutes = require('./routes/promptInputRoutes');
+const taskRoutes = require('./routes/taskRoutes');
 
 if (!fs.existsSync(profileDir)) fs.mkdirSync(profileDir);
 
@@ -27,6 +28,7 @@ app.use('/api/profiles', profileRoutes);
 app.use('/api/content', contentRoutes);
 app.use('/api/promptCategory', promptCategory);
 app.use('/api/prompts', promptInputRoutes);
+app.use('/api/task', taskRoutes);
 
 const swaggerOutputPath = path.resolve(process.cwd(), "swagger-output.json");
 

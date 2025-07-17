@@ -1,15 +1,23 @@
 const express = require('express');
-const { getProfileByOwner } = require('../repositories/ProfileRepository');
+const { getProfileByOwner, markLastAction } = require('../repositories/ProfileRepository');
+const {doPostArticleCMC } =require('../automation/cmcService')
 const router = express.Router();
 
-app.post('/api/task/postarticle', async (req, res) => {
+router.post('/postcmc', async (req, res) => {
   const { owner, category, postContent } = req.body;
 
   try {
-    const emailInfo =await getProfileByOwner(owner);
-    
+    const emailInfo = await getProfileByOwner(owner);
+    if(emailInfo){
 
-    await launchProfile({ name, url , postContent});
+        const name = emailInfo?.email.split('@')[0]
+        await doPostArticleCMC({ name, postContent});
+        if(emailInfo?.email){
+            await markLastAction(emailInfo?.email)
+        }
+
+    }
+
 
     res.json({ success: true });
   } catch (e) {

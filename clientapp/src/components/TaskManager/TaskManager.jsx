@@ -7,6 +7,7 @@ import { getPromptList } from '@/services/promptService';
 import { getContent } from '@/services/contentService';
 
 import React, { useEffect, useState } from 'react';
+import { postArticleCMC } from '@/services/cmcService';
 
 const TaskManager = () => {
     const [computerNames, setComputerNames] = useState([]);
@@ -77,12 +78,19 @@ const TaskManager = () => {
         if(inputPrompt?.name){
 
             console.log(`📂 Processing category [${category}] with promt ${inputPrompt?.name} `);
-            debugger
             const res = await getContent(inputPrompt?.name);
             const writerResponse = await res?.data?.data;
             
 
+
+
             console.log("article content", writerResponse)
+
+            await postArticleCMC({
+                owner: selectedPC,
+                category , 
+                postContent: writerResponse
+            })
 
         }
         setCurrentCategoryIndex((prev) => (prev + 1)%selectedCategories.length);
@@ -161,7 +169,7 @@ const TaskManager = () => {
                         ))}
                     </div>
                     <div>
-                        <button onClick={handlePost}> DO POST </button>
+                        <button onClick={handlePost}> DO POST CMC</button>
 
                     </div>
                 </div>

@@ -13,7 +13,7 @@ class ProfileRepository {
       const currentTimestamp = Math.floor(Date.now() / 1000); // seconds
       const threshold = currentTimestamp - periodRange;
 
-      const results = await ProfileEmail.findAll({
+      const results = await ProfileEmail.findOne({
         where: {
           computername: computerName,
           isverified: true,
