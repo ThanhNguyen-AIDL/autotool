@@ -33,7 +33,7 @@ async function doPostArticleCMC({
     userDataDir: profilePath,
     executablePath: chromePath, // adjust for your OS
     args: [
-      '--start-maximized',
+      '--window-size=1280,800'
     ],
     defaultViewport: null,
   });
