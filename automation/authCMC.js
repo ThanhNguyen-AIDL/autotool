@@ -1,5 +1,5 @@
 
-const trendingTokens = ['$ETH', '$SOL', '$DOGE', '$SHIB', '$BTC']; // example
+const trendingTokens = ['$ETH', '$SOL', '$USDT', '$BTC']; // example
 const repostText = ['Nice project!', 'Check this out!', 'Bullish on this.', '🔥🔥🔥'];
 const logger = require('../middlewares/logger')
 
