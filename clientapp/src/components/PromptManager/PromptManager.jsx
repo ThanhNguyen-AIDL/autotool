@@ -60,7 +60,7 @@ const PromptManager = () => {
       <h2>📌 Prompt Manager</h2>
 
       <form onSubmit={handleSubmit}>
-        <input
+        <textarea
           name="name"
           placeholder="Prompt name"
           value={form.name}

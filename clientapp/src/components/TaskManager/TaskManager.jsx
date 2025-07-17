@@ -233,7 +233,7 @@ const TaskManager = () => {
                             onChange={(e) => setIntervalMinutes(Number(e.target.value))}
                             style={{ marginLeft: 10 }}
                         >
-                            {[1, 3, 5, 10, 15, 20, 30].map((min) => (
+                            {[1, 3, 5, 10, 15, 20, 30, 60,90,120].map((min) => (
                                 <option key={min} value={min}>
                                     {min} min
                                 </option>
