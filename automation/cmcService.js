@@ -55,6 +55,10 @@ async function doPostArticleCMC({
   }
 
   await page.goto("https://coinmarketcap.com/community", { waitUntil: 'domcontentloaded' });
+  await new Promise(resolve => setTimeout(resolve, 2000));
+  await page.goto("https://coinmarketcap.com/community", { waitUntil: 'domcontentloaded' });
+  await new Promise(resolve => setTimeout(resolve, 2000));
+  await page.goto("https://coinmarketcap.com/community", { waitUntil: 'domcontentloaded' });
 
 
   await postComment(page, postContent)
