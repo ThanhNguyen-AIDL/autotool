@@ -6,27 +6,47 @@ import { getPromptCategories } from '@/services/promptCatService';
 import { getPromptList } from '@/services/promptService';
 import { getContent } from '@/services/contentService';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { postArticleCMC } from '@/services/cmcService';
 import { checkCooldown } from '@/services/cooldownService';
 
 const TaskManager = () => {
     const [computerNames, setComputerNames] = useState([]);
     const [selectedPC, setSelectdPC] = useState();
-    const {categories, setCategories } = useCategories()
-    const [promptMap, setPromptMap] = useState({}); // category -> prompt list
+    const { categories, setCategories } = useCategories();
+    const [promptMap, setPromptMap] = useState({});
     const [selectedCategories, setSelectedCategories] = useState([]);
     const [currentCategoryIndex, setCurrentCategoryIndex] = useState(0);
-
     const [isRunning, setIsRunning] = useState(false);
     const [intervalId, setIntervalId] = useState(null);
     const [intervalMinutes, setIntervalMinutes] = useState(10);
 
+    // Refs to hold latest state
+    const selectedCategoriesRef = useRef([]);
+    const promptMapRef = useRef({});
+    const selectedPCRef = useRef();
+    const currentCategoryIndexRef = useRef(0);
 
     useEffect(() => {
         fetchComputerNames();
-        fetchCategories()
+        fetchCategories();
     }, []);
+
+    useEffect(() => {
+        selectedCategoriesRef.current = selectedCategories;
+    }, [selectedCategories]);
+
+    useEffect(() => {
+        promptMapRef.current = promptMap;
+    }, [promptMap]);
+
+    useEffect(() => {
+        selectedPCRef.current = selectedPC;
+    }, [selectedPC]);
+
+    useEffect(() => {
+        currentCategoryIndexRef.current = currentCategoryIndex;
+    }, [currentCategoryIndex]);
 
     useEffect(() => {
         return () => {
@@ -34,10 +54,9 @@ const TaskManager = () => {
         };
     }, [intervalId]);
 
-
     const fetchComputerNames = async () => {
         try {
-            const data = await getCompunterNames()
+            const data = await getCompunterNames();
             setComputerNames(data);
         } catch (err) {
             console.error('Failed to load computer names');
@@ -65,7 +84,6 @@ const TaskManager = () => {
     const handleCategoryToggle = async (category) => {
         const alreadySelected = selectedCategories.includes(category);
         if (alreadySelected) {
-            // Remove category from state and map
             setSelectedCategories((prev) => prev.filter((c) => c !== category));
             setPromptMap((prev) => {
                 const newMap = { ...prev };
@@ -78,49 +96,51 @@ const TaskManager = () => {
         }
     };
 
-    const handlePost = async () =>{
-        if (currentCategoryIndex >= selectedCategories.length) {
-            setCurrentCategoryIndex((prev) => (prev + 1)%selectedCategories.length);
+    const handlePost = async () => {
+        const selected = selectedCategoriesRef.current;
+        const map = promptMapRef.current;
+        const pc = selectedPCRef.current;
+        const idx = currentCategoryIndexRef.current;
+
+        if (!pc || selected.length === 0) return;
+
+        if (idx >= selected.length) {
+            const nextIdx = (idx + 1) % selected.length;
+            currentCategoryIndexRef.current = nextIdx;
+            setCurrentCategoryIndex(nextIdx);
             return;
         }
-        const cooldown = await checkCooldown('doPostArticleCMC')
 
-        if(!cooldown.allowed){
-            return
+        const cooldown = await checkCooldown('doPostArticleCMC');
+        if (!cooldown.allowed) {
+            return;
         }
 
-        const category = selectedCategories[currentCategoryIndex];
-        const prompts = promptMap[category] || [];
+        const category = selected[idx];
+        const prompts = map[category] || [];
         const inputPrompt = prompts[Math.floor(Math.random() * prompts.length)];
 
-        if(inputPrompt?.name){
+        if (inputPrompt?.name) {
+            console.log(`📂 Processing category [${category}] with prompt ${inputPrompt.name}`);
+            const res = await getContent(inputPrompt.name);
+            const writerResponse = res?.data?.data;
 
-            console.log(`📂 Processing category [${category}] with promt ${inputPrompt?.name} `);
-            const res = await getContent(inputPrompt?.name);
-            const writerResponse = await res?.data?.data;
-            
+            console.log("article content", writerResponse);
 
+            await postArticleCMC({ owner: pc, category, postContent: writerResponse });
 
-
-            console.log("article content", writerResponse)
-
-            await postArticleCMC({
-                owner: selectedPC,
-                category , 
-                postContent: writerResponse
-            })
-
+            const nextIdx = (idx + 1) % selected.length;
+            currentCategoryIndexRef.current = nextIdx;
+            setCurrentCategoryIndex(nextIdx);
         }
-        setCurrentCategoryIndex((prev) => (prev + 1)%selectedCategories.length);
-    }
-
+    };
 
     const handleStart = () => {
         if (isRunning || !selectedPC || selectedCategories.length === 0) return;
 
         const id = setInterval(() => {
             handlePost();
-        }, intervalMinutes * 60 * 1000); // Convert minutes to ms
+        }, intervalMinutes * 60 * 1000);
 
         setIntervalId(id);
         setIsRunning(true);
@@ -131,8 +151,6 @@ const TaskManager = () => {
         setIntervalId(null);
         setIsRunning(false);
     };
-
-
 
     return (
         <div>
@@ -215,7 +233,7 @@ const TaskManager = () => {
                             onChange={(e) => setIntervalMinutes(Number(e.target.value))}
                             style={{ marginLeft: 10 }}
                         >
-                            {[5, 10, 15, 20, 30].map((min) => (
+                            {[1, 3, 5, 10, 15, 20, 30].map((min) => (
                                 <option key={min} value={min}>
                                     {min} min
                                 </option>
