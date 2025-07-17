@@ -7,11 +7,12 @@ const {canExecute, markExecuted} = require('./cooldownManager')
 const logger = require('../middlewares/logger')
 async function doPostArticleCMC({
   name,
+  email,
   postContent = "",
 }) {
 
   if(!canExecute('doPostArticleCMC', 600)){
-    logger.info({message:"still cooldown CMC post"})
+    logger.info({message:"still cooldown CMC post 600s"})
     return
   }
 
@@ -37,7 +38,7 @@ async function doPostArticleCMC({
   const page = await browser.newPage();
   await page.goto('https://coinmarketcap.com/', { waitUntil: 'domcontentloaded' });
 
-  const loggedOn = await doLogin(page)
+  const loggedOn = await doLogin(page, email)
   
   if(!loggedOn){
       await browser.close()
@@ -46,7 +47,7 @@ async function doPostArticleCMC({
   const suspended = await checkSuspendedAcct(page);
   
   if(suspended){
-    console.log('Suspended:', name);
+    logger.info({message:"Account suspended"})
     await browser.close();
   }
 
@@ -54,6 +55,8 @@ async function doPostArticleCMC({
 
 
   await postComment(page, postContent)
+
+  await browser.close();
 
   return browser;
 }

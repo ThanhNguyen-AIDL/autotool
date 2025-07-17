@@ -1,7 +1,7 @@
 
 const trendingTokens = ['$ETH', '$SOL', '$DOGE', '$SHIB', '$BTC']; // example
 const repostText = ['Nice project!', 'Check this out!', 'Bullish on this.', '🔥🔥🔥'];
-
+const logger = require('../middlewares/logger')
 
 async function canLogin(page) {
     let browser;
@@ -23,8 +23,7 @@ async function canLogin(page) {
 }
 
 
-async function doLogin(page) {
-    const email = "badkil@bumba.sbs"
+async function doLogin(page, email) {
     const password = 'TopOne1990@'
     try {
         if (await canLogin(page)) {
@@ -50,7 +49,7 @@ async function doLogin(page) {
         }
     }
     catch (err) {
-        console.error('Error logging in:', err.message);
+        logger.error({message:'Error logging in: '+ err.message});
         return false;
     }
 }
@@ -76,7 +75,8 @@ async function checkSuspendedAcct(page) {
     if (err.name === 'TimeoutError') {
       return false; // Timeout = not suspended
     } else {
-      console.error('Error checking account:', err.message);
+        logger.error({message:'Error logging in: '+ err.message});
+
       return false;
     }
   }
@@ -125,7 +125,8 @@ async function postComment(page, postContent) {
         });
 
         if (postButton) {
-            console.log('POST CLICKED');
+            logger.info({message:'POST CLICKED'});
+
             await postButton.click();
         }
     } catch (e) {
