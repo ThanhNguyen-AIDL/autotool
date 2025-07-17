@@ -8,6 +8,7 @@ import { getContent } from '@/services/contentService';
 
 import React, { useEffect, useState } from 'react';
 import { postArticleCMC } from '@/services/cmcService';
+import { checkCooldown } from '@/services/cooldownService';
 
 const TaskManager = () => {
     const [computerNames, setComputerNames] = useState([]);
@@ -17,11 +18,22 @@ const TaskManager = () => {
     const [selectedCategories, setSelectedCategories] = useState([]);
     const [currentCategoryIndex, setCurrentCategoryIndex] = useState(0);
 
+    const [isRunning, setIsRunning] = useState(false);
+    const [intervalId, setIntervalId] = useState(null);
+    const [intervalMinutes, setIntervalMinutes] = useState(10);
+
 
     useEffect(() => {
         fetchComputerNames();
         fetchCategories()
     }, []);
+
+    useEffect(() => {
+        return () => {
+            if (intervalId) clearInterval(intervalId);
+        };
+    }, [intervalId]);
+
 
     const fetchComputerNames = async () => {
         try {
@@ -71,6 +83,12 @@ const TaskManager = () => {
             setCurrentCategoryIndex((prev) => (prev + 1)%selectedCategories.length);
             return;
         }
+        const cooldown = await checkCooldown('doPostArticleCMC')
+
+        if(!cooldown.allowed){
+            return
+        }
+
         const category = selectedCategories[currentCategoryIndex];
         const prompts = promptMap[category] || [];
         const inputPrompt = prompts[Math.floor(Math.random() * prompts.length)];
@@ -95,6 +113,24 @@ const TaskManager = () => {
         }
         setCurrentCategoryIndex((prev) => (prev + 1)%selectedCategories.length);
     }
+
+
+    const handleStart = () => {
+        if (isRunning || !selectedPC || selectedCategories.length === 0) return;
+
+        const id = setInterval(() => {
+            handlePost();
+        }, intervalMinutes * 60 * 1000); // Convert minutes to ms
+
+        setIntervalId(id);
+        setIsRunning(true);
+    };
+
+    const handleStop = () => {
+        clearInterval(intervalId);
+        setIntervalId(null);
+        setIsRunning(false);
+    };
 
 
 
@@ -172,6 +208,37 @@ const TaskManager = () => {
                         <button onClick={handlePost}> DO POST CMC</button>
 
                     </div>
+                    <div style={{ marginTop: 30 }}>
+                        <label>Interval:</label>
+                        <select
+                            value={intervalMinutes}
+                            onChange={(e) => setIntervalMinutes(Number(e.target.value))}
+                            style={{ marginLeft: 10 }}
+                        >
+                            {[5, 10, 15, 20, 30].map((min) => (
+                                <option key={min} value={min}>
+                                    {min} min
+                                </option>
+                            ))}
+                        </select>
+
+                        <button
+                            style={{ marginLeft: 20, backgroundColor: isRunning ? '#faad14' : '#52c41a' }}
+                            onClick={handleStart}
+                            disabled={isRunning}
+                        >
+                            {isRunning ? 'Running...' : 'Start Job'}
+                        </button>
+
+                        <button
+                            style={{ marginLeft: 10, backgroundColor: '#f5222d', color: '#fff' }}
+                            onClick={handleStop}
+                            disabled={!isRunning}
+                        >
+                            Stop Job
+                        </button>
+                    </div>
+
                 </div>
             )}
 

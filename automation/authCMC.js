@@ -128,6 +128,8 @@ async function postComment(page, postContent) {
             logger.info({message:'POST CLICKED'});
 
             await postButton.click();
+            await new Promise(resolve => setTimeout(resolve, 10000));
+
         }
     } catch (e) {
         console.error(`Failed to enter text: ${e.message}`);
