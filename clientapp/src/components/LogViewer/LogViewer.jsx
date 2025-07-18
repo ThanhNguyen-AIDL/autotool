@@ -3,10 +3,14 @@
 import React, { useEffect, useState } from 'react';
 import { getLogNames, getLogsByName } from '@/services/logService';
 import { useLogManager } from '@/redux/utils/logUtitls';
-import styles from './LogViewer.module.css'
+import styles from './LogViewer.module.css';
+
 export default function LogViewer() {
-    const logManager = useLogManager()
+  const logManager = useLogManager();
   const [loading, setLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(20);
+  const [totalPages, setTotalPages] = useState(1);
 
   useEffect(() => {
     getLogNames().then(logManager.setLogNames).catch(console.error);
@@ -14,26 +18,44 @@ export default function LogViewer() {
 
   useEffect(() => {
     if (!logManager.selectedFile) return;
+    fetchLogs();
+  }, [logManager.selectedFile, page, limit]);
+
+  const fetchLogs = async () => {
     setLoading(true);
-    getLogsByName(logManager.selectedFile)
-      .then(data => logManager.setLogRows(data))
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  }, [logManager.selectedFile]);
+    try {
+      const res = await getLogsByName(logManager.selectedFile, page, limit);
+      logManager.setLogRows(res.logs);
+      setTotalPages(res.totalPages);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLimitChange = (e) => {
+    setLimit(parseInt(e.target.value));
+    setPage(1); // reset to first page when limit changes
+  };
 
   return (
     <div className="p-6 max-w-screen-xl mx-auto">
       <h1 className="text-2xl font-bold mb-4">Log Viewer</h1>
 
-      <div className="mb-6">
-        <label htmlFor="log-select" className="font-medium mr-2">
+      <div className="mb-6 flex items-center gap-4">
+        <label htmlFor="log-select" className="font-medium">
           Select Log File:
         </label>
         <select
           id="log-select"
           className="border rounded px-3 py-2"
-          value={logManager.selectedFile}
-          onChange={(e) => logManager.setSelectedName(e.target.value)}
+          value={logManager?.selectedFile}
+          onChange={(e) => {
+            debugger
+            logManager?.setSelectedName(e.target.value);
+            setPage(1);
+          }}
         >
           <option value="">-- Select a log file --</option>
           {logManager.logFiles.map((file) => (
@@ -42,41 +64,76 @@ export default function LogViewer() {
             </option>
           ))}
         </select>
+
+        <label htmlFor="limit-select" className="ml-auto font-medium">
+          Items per page:
+        </label>
+        <select
+          id="limit-select"
+          className="border rounded px-2 py-1"
+          value={limit}
+          onChange={handleLimitChange}
+        >
+          {[ 50, 100, 200].map((val) => (
+            <option key={val} value={val}>{val}</option>
+          ))}
+        </select>
       </div>
 
       {loading ? (
         <p>Loading log entries...</p>
-      ) : logManager.logEntities.length > 0 ? (
-        <div className="overflow-x-auto border rounded">
-        <table className={styles.logTable}>
-            <thead>
+      ) : logManager?.logEntities?.length > 0 ? (
+        <>
+          <div className="overflow-x-auto border rounded mb-4">
+            <table className={styles.logTable}>
+              <thead>
                 <tr>
-                <th>Time</th>
-                <th>PID</th>
-                <th>Hostname</th>
-                <th>Details</th>
+                  <th>Time</th>
+                  <th>PID</th>
+                  <th>Hostname</th>
+                  <th>Details</th>
                 </tr>
-            </thead>
-            <tbody>
-                {logManager.logEntities.map((entry, index) => (
-                <tr key={index}>
+              </thead>
+              <tbody>
+                {logManager?.logEntities?.map((entry, index) => (
+                  <tr key={index}>
                     <td>{entry.time}</td>
                     <td>{entry.pid}</td>
                     <td>{entry.hostname}</td>
                     <td className={styles.detailsCell}>
-                        <div  className={styles.detailsPreview}>
-                            {JSON.stringify(entry.details)}
-                        </div>
-                        <div  className={styles.detailsFull}>
-                            {JSON.stringify(entry.details, null, 2)}
-                        </div>
+                      <div className={styles.detailsPreview}>
+                        {JSON.stringify(entry.details)}
+                      </div>
+                      <div className={styles.detailsFull}>
+                        {JSON.stringify(entry.details, null, 2)}
+                      </div>
                     </td>
-                </tr>
+                  </tr>
                 ))}
-            </tbody>
-        </table>
+              </tbody>
+            </table>
+          </div>
 
-        </div>
+          <div className="flex justify-between items-center">
+            <button
+              className="px-3 py-1 border rounded disabled:opacity-50"
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1}
+            >
+              Prev
+            </button>
+            <span>
+              Page {page} of {totalPages}
+            </span>
+            <button
+              className="px-3 py-1 border rounded disabled:opacity-50"
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page >= totalPages}
+            >
+              Next
+            </button>
+          </div>
+        </>
       ) : logManager.selectedFile ? (
         <p>No entries found in this log.</p>
       ) : null}

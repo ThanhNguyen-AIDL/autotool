@@ -3,8 +3,8 @@ import API from './api';
 export const getLogNames = () =>
   API.get(`/api/logs/`).then(res => res.data);
 
-export const getLogsByName = (name) =>{
-    const filename = encodeURIComponent(name);
-    return API.get(`/api/logs/view?file=${filename}`).then(res => res.data);
-}
-
+export const getLogsByName = (name, page = 1, limit = 20) => {
+  const filename = encodeURIComponent(name);
+  const params = new URLSearchParams({ file: filename, page, limit });
+  return API.get(`/api/logs/view?${params.toString()}`).then(res => res.data);
+};

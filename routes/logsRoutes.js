@@ -18,10 +18,12 @@ router.get('/', (req, res) => {
   });
 });
 
-// API 2: Parse a selected log file
-// API 2 (Improved): Parse log file from query parameter
+
+
 router.get('/view', async (req, res) => {
   const filename = req.query.file;
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 50;
 
   if (!filename || !filename.endsWith('.log')) {
     return res.status(400).json({ error: 'Missing or invalid log filename' });
@@ -55,12 +57,25 @@ router.get('/view', async (req, res) => {
       }
     }
 
-    res.json(parsedLogs.reverse());
+    const reversedLogs = parsedLogs.reverse();
+    const total = reversedLogs.length;
+    const start = (page - 1) * limit;
+    const end = page * limit;
+    const paginated = reversedLogs.slice(start, end);
+
+    res.json({
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+      logs: paginated
+    });
   } catch (err) {
+    console.error('Error parsing log file:', err);
     res.status(500).json({ error: 'Failed to parse log file' });
   }
 });
 
-
-
 module.exports = router;
+
+
