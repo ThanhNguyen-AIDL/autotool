@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const STATE_FILE = path.join(process.cwd(), 'method_state.json');
+const STATE_FILE = path.join(process.cwd(),'logs', 'method_state.json');
 
 // Load full state (all keys)
 function loadState() {
