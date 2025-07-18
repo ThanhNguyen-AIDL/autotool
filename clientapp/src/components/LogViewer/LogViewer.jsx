@@ -102,8 +102,7 @@ export default function LogViewer() {
               <thead>
                 <tr>
                   <th>Time</th>
-                  <th>PID</th>
-                  <th>Hostname</th>
+                  <th>Action ID</th>
                   <th>Details</th>
                 </tr>
               </thead>
@@ -111,8 +110,7 @@ export default function LogViewer() {
                 {logManager?.logEntities?.map((entry, index) => (
                   <tr key={index}>
                     <td>{formatToLocalTime(entry.time)}</td>
-                    <td>{entry.pid}</td>
-                    <td>{entry.hostname}</td>
+                    <td>{entry.actionId}</td>
                     <td className={styles.detailsCell}>
                       <div className={styles.detailsPreview}>
                         {JSON.stringify(entry.details)}

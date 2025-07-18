@@ -44,12 +44,11 @@ router.get('/view', async (req, res) => {
     for await (const line of rl) {
       try {
         const log = JSON.parse(line);
-        const { time, pid, hostname, ...rest } = log;
+        const { time, pid, hostname, actionId,  ...rest } = log;
 
         parsedLogs.push({
           time,
-          pid,
-          hostname,
+          actionId,
           details: rest
         });
       } catch (err) {
