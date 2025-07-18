@@ -152,7 +152,7 @@ export default function CooldownManager() {
                         }))
                       }
                     >
-                      {[30, 60, 120, 600, 1200, 1800, 3600, 7200, 9600, 86400].map((seconds) => (
+                      {[30, 60, 120, 600, 1200, 1800, 3600, 7200, 9600, 21600, 43200, 86400].map((seconds) => (
                         <option key={seconds} value={seconds}>
                           {formatSeconds(seconds)}
                         </option>
