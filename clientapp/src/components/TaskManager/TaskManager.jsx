@@ -116,14 +116,16 @@ const TaskManager = () => {
             return;
         }
 
-        const cooldown = await checkCooldown('doPostArticleCMC');
-        if (!cooldown.allowed) {
-            return;
-        }
-
         const category = selected[idx];
         const prompts = map[category] || [];
         const inputPrompt = prompts[Math.floor(Math.random() * prompts.length)];
+
+
+
+        const cooldown = await checkCooldown(category, pc);
+        if (!cooldown.allowed) {
+            return;
+        }
 
         if (inputPrompt?.name) {
             console.log(`📂 Processing category [${category}] with prompt ${inputPrompt.name}`);

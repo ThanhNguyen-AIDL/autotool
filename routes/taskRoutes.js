@@ -1,4 +1,5 @@
 const express = require('express');
+const cooldownRepo = require('../repositories/CooldownRepository')
 const { getProfileByOwner, markLastAction } = require('../repositories/ProfileRepository');
 const {doPostArticleCMC } =require('../automation/cmcService')
 const logger = require('../middlewares/logger');
@@ -14,9 +15,13 @@ router.post('/postcmc', async (req, res) => {
         logger.info({found_email:emailInfo?.email})
       
         const name = emailInfo?.email.split('@')[0]
-        await doPostArticleCMC({ name, email: emailInfo?.email, postContent});
-        if(emailInfo?.email){
-            await markLastAction(emailInfo?.email)
+        if(await (cooldownRepo.canExecute(category, owner))){
+
+          await doPostArticleCMC({ name, email: emailInfo?.email, postContent});
+          await cooldownRepo.markExecuted(category, owner)
+          if(emailInfo?.email){
+              await markLastAction(emailInfo?.email)
+          }
         }
 
     }

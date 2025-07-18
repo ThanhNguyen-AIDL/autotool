@@ -8,23 +8,30 @@ class ProfileRepository {
   }
 
 
-  async getProfileByOwner(computerName, periodRange = 86400 ) {
-      
-      const currentTimestamp = Math.floor(Date.now() / 1000); // seconds
-      const threshold = currentTimestamp - periodRange;
+  async getProfileByOwner(computerName, periodRange = 86400) {
+    const currentTimestamp = Math.floor(Date.now() / 1000);
+    const threshold = currentTimestamp - periodRange;
 
-      const results = await ProfileEmail.findOne({
-        where: {
-          computername: computerName,
-          isverified: true,
-          [Op.or]: [
-            { lastaction: { [Op.lt]: threshold } },
-            { lastaction: null }
-          ]
-        }
-      });
+    const whereClause = {
+      computername: computerName,
+      isverified: true,
+      [Op.or]: [
+        { lastaction: { [Op.lt]: threshold } },
+        { lastaction: null }
+      ]
+    };
 
-      return results;
+    const count = await ProfileEmail.count({ where: whereClause });
+    if (count === 0) return null;
+
+    const randomOffset = Math.floor(Math.random() * count);
+
+    const result = await ProfileEmail.findOne({
+      where: whereClause,
+      offset: randomOffset,
+    });
+
+    return result;
   }
 
 
@@ -56,22 +63,22 @@ class ProfileRepository {
     });
     return await ProfileEmail.findOne({ where: { id } });
   }
-  
+
 
   async delete(id) {
     return await ProfileEmail.destroy({ where: { id } });
   }
 
-  async getCompunterNames(){
+  async getCompunterNames() {
     const owners = await ProfileEmail.findAll({
-        attributes: ['computername'],
-        where: {
-          computername: {
-            [Sequelize.Op.not]: null
-          }
-        },
-        group: ['computername'],
-        raw: true
+      attributes: ['computername'],
+      where: {
+        computername: {
+          [Sequelize.Op.not]: null
+        }
+      },
+      group: ['computername'],
+      raw: true
     });
 
     return owners.map((row) => row.computername);
