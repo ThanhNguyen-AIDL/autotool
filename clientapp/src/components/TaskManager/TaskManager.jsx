@@ -123,7 +123,12 @@ const TaskManager = () => {
 
 
         const cooldown = await checkCooldown(category, pc);
+
+        
         if (!cooldown.allowed) {
+            const nextIdx = (idx + 1) % selected.length;
+            currentCategoryIndexRef.current = nextIdx;
+            setCurrentCategoryIndex(nextIdx);
             return;
         }
 
@@ -136,6 +141,7 @@ const TaskManager = () => {
 
             await postArticleCMC({ owner: pc, category, postContent: writerResponse });
 
+  
             const nextIdx = (idx + 1) % selected.length;
             currentCategoryIndexRef.current = nextIdx;
             setCurrentCategoryIndex(nextIdx);
