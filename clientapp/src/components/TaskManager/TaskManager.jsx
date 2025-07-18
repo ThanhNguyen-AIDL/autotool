@@ -139,13 +139,15 @@ const TaskManager = () => {
             setCurrentCategoryIndex(nextIdx);
 
             getLogsByName(logManager.selectedFile)
-                  .then(data => logManager.setLogRows(data))
+                  .then(data => logManager.setLogRows(data.logs))
                   .catch(console.error)
         }
     };
 
     const handleStart = () => {
         if (isRunning || !selectedPC || selectedCategories.length === 0) return;
+
+        handlePost()
 
         const id = setInterval(() => {
             handlePost();

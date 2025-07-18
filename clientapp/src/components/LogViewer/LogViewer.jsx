@@ -5,6 +5,20 @@ import { getLogNames, getLogsByName } from '@/services/logService';
 import { useLogManager } from '@/redux/utils/logUtitls';
 import styles from './LogViewer.module.css';
 
+
+function formatToLocalTime(isoString, timeZone = 'Asia/Ho_Chi_Minh') {
+  const date = new Date(isoString);
+  const local = new Date(date.toLocaleString('en-US', { timeZone }));
+
+  const year = local.getFullYear();
+  const month = String(local.getMonth() + 1).padStart(2, '0');
+  const day = String(local.getDate()).padStart(2, '0');
+  const hours = String(local.getHours()).padStart(2, '0');
+  const minutes = String(local.getMinutes()).padStart(2, '0');
+  const seconds = String(local.getSeconds()).padStart(2, '0');
+
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+}
 export default function LogViewer() {
   const logManager = useLogManager();
   const [loading, setLoading] = useState(false);
@@ -52,7 +66,6 @@ export default function LogViewer() {
           className="border rounded px-3 py-2"
           value={logManager?.selectedFile}
           onChange={(e) => {
-            debugger
             logManager?.setSelectedName(e.target.value);
             setPage(1);
           }}
@@ -97,7 +110,7 @@ export default function LogViewer() {
               <tbody>
                 {logManager?.logEntities?.map((entry, index) => (
                   <tr key={index}>
-                    <td>{entry.time}</td>
+                    <td>{formatToLocalTime(entry.time)}</td>
                     <td>{entry.pid}</td>
                     <td>{entry.hostname}</td>
                     <td className={styles.detailsCell}>
