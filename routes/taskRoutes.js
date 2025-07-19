@@ -2,6 +2,7 @@ const express = require('express');
 const cooldownRepo = require('../repositories/CooldownRepository')
 const { getProfileByOwner, markLastAction } = require('../repositories/ProfileRepository');
 const {doPostArticleCMC } =require('../automation/cmcService')
+const { launchProfile } =require('../automation/launcher')
 const logger = require('../middlewares/logger');
 const router = express.Router();
 
@@ -32,6 +33,25 @@ router.post('/postcmc', async (req, res) => {
     res.status(500).json({ error: e.message });
   }
 });
+
+
+router.post('/launch', async (req, res) => {
+  const { owner } = req.body;
+
+  try {
+    const emailInfo = await getProfileByOwner(owner);
+    if(emailInfo){      
+        const name = emailInfo?.email.split('@')[0]
+        await launchProfile({ name});
+
+      }
+
+    res.json({ success: true });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 
 
 module.exports = router;

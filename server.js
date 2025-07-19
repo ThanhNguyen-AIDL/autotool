@@ -45,17 +45,7 @@ if (fs.existsSync(swaggerOutputPath)) {
   console.warn("Swagger output file not found. Please generate it first.");
 }
 
-app.post('/api/launch', async (req, res) => {
-  const { name, url, postContent } = req.body;
 
-  try {
-    await launchProfile({ name, url , postContent});
-
-    res.json({ success: true });
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
-});
 
 app.listen(PORT, () => {
   console.log(`Server running at http://localhost:${PORT}`);
