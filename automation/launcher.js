@@ -23,32 +23,24 @@ async function launchProfile({
     headless: false,
     userDataDir: profilePath,
     executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', // adjust for your OS
-    args: [
-      '--start-maximized',
+      args: [
+      '--start-maximized'
     ],
+    ignoreDefaultArgs: ['--enable-automation'], 
     defaultViewport: null,
   });
 
   const page = await browser.newPage();
-  await page.goto(url, { waitUntil: 'domcontentloaded' });
-
-  const loggedOn = await doLogin(page)
-  
-  if(!loggedOn){
-      await browser.close()
-  }
-
-  const suspended = await checkSuspendedAcct(page);
-  
-  if(suspended){
-    console.log('Suspended:', name);
-    await browser.close();
-  }
-
-  await page.goto("https://coinmarketcap.com/community", { waitUntil: 'domcontentloaded' });
+  // await page.evaluateOnNewDocument(() => {
+  //   Object.defineProperty(navigator, 'webdriver', {
+  //     get: () => false,
+  //   });
+  // });
+  await page.goto('https://coinmarketcap.com/', { waitUntil: 'domcontentloaded' });
 
 
-  await postComment(page, postContent)
+  await page.goto("https://sosovalue.com", { waitUntil: 'domcontentloaded' });
+
 
   return browser;
 }
