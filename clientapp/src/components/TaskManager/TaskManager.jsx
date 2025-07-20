@@ -32,6 +32,9 @@ const TaskManager = () => {
     const selectedPCRef = useRef();
     const currentCategoryIndexRef = useRef(0);
 
+    const [collapsedCategories, setCollapsedCategories] = useState(true);
+
+
     useEffect(() => {
         fetchComputerNames();
         fetchCategories();
@@ -79,7 +82,7 @@ const TaskManager = () => {
 
     const fetchPromptsForCategory = async (category) => {
         try {
-            const prompts = await getPromptList(category);
+            const prompts = await getPromptList(category, selectedPC);
             setPromptMap((prev) => ({ ...prev, [category]: prompts }));
         } catch (err) {
             console.error(`Failed to fetch prompts for ${category}`);
@@ -207,9 +210,9 @@ const TaskManager = () => {
                         ))}
                     </div>
 
-                    <div style={{ marginTop: 10 }}>
+                    <div style={{ marginTop: 10 , }}>
                         <strong>Selected Categories:</strong>
-                        <ul style={{ marginTop: 8 }}>
+                        <ul style={{ marginTop: 8 , }} >
                             {selectedCategories.map((cat, index) => (
                             <li
                                 key={cat}
@@ -228,18 +231,22 @@ const TaskManager = () => {
                         </ul>
                     </div>
 
-                    <div style={{ marginTop: 20 }}>
-                        <h4>Selected Prompts by Category</h4>
-                        {selectedCategories.map((cat) => (
-                        <div key={cat} style={{ marginBottom: 10 }}>
-                            <strong>{cat}</strong>
-                            <ul>
-                            {(promptMap[cat] || []).map((p) => (
-                                <li key={p.id}>{p.name}</li>
+                    <div style={{ marginTop: 20, }} >
+
+                        <h4 onClick={() => setCollapsedCategories((prev) => !prev)}>Selected Prompts by Category</h4>
+                        <div style={{ marginTop: 20, display: collapsedCategories ? "block" : "none"   }} > 
+                            {selectedCategories.map((cat) => (
+                            <div key={cat} style={{ marginBottom: 10 }}>
+                                <strong>{cat}</strong>
+                                <ul>
+                                {(promptMap[cat] || []).map((p) => (
+                                    <li key={p.id}>{p.name}</li>
+                                ))}
+                                </ul>
+                            </div>
                             ))}
-                            </ul>
                         </div>
-                        ))}
+
                     </div>
                     <div>
                         <button onClick={handlePost}> DO POST CMC</button>
