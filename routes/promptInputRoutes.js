@@ -16,15 +16,16 @@ router.post('/', async (req, res) => {
 // 📋 Get all prompt inputs (optionally filter by category)
 router.get('/', async (req, res) => {
   try {
-    const { category } = req.query;
+    const { category, owner } = req.query;
     const where = category
       ? {
           // Case-insensitive match using LOWER()
           category: {
             [Op.iLike]: category.toLowerCase()
-          }
+          },
+          owner
         }
-      : {};
+      : {owner};
     const prompts = await PromptInput.findAll({ where });
     res.json(prompts);
   } catch (err) {
