@@ -1,7 +1,9 @@
 const express = require('express');
 const cooldownRepo = require('../repositories/CooldownRepository')
 const { getProfileByOwner, markLastAction } = require('../repositories/ProfileRepository');
+const { getProfileByOwner: getSSLProfileByOwner, markLastAction: markSSLLastAction } = require('../repositories/SSLProfileRepository');
 const {doPostArticleCMC } =require('../automation/cmcService')
+const { doSSLOperation } =require('../automation/sslService')
 const { launchProfile } =require('../automation/launcher')
 const logger = require('../middlewares/logger');
 const router = express.Router();
@@ -34,6 +36,36 @@ router.post('/postcmc', async (req, res) => {
   }
 });
 
+/**
+ * POST /api/task/postssl - Post content to Sosovalue platform
+ * Similar to /postcmc but uses SSL-specific repository and service
+ */
+router.post('/postssl', async (req, res) => {
+  const { owner, category, postContent } = req.body;
+  logger.info({ step: 'ssl_validate_input', owner, category, postContent });
+
+  try {
+    const emailInfo = await getSSLProfileByOwner(owner);
+    if(emailInfo){
+        logger.info({found_ssl_email:emailInfo?.email})
+      
+        const name = emailInfo?.email.split('@')[0]
+        if(await (cooldownRepo.canExecute(category, owner))){
+
+          await doSSLOperation({ name, email: emailInfo?.email, postContent, action: 'post'});
+          await cooldownRepo.markExecuted(category, owner)
+          if(emailInfo?.email){
+              await markSSLLastAction(emailInfo?.email)
+          }
+        }
+
+    }
+
+    res.json({ success: true });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
 
 router.post('/launch', async (req, res) => {
   const { owner } = req.body;

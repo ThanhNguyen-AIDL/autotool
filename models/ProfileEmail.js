@@ -42,6 +42,17 @@ const ProfileEmail = sequelize.define(
       type: DataTypes.STRING,
       allowNull: true,
     },
+    // SSL-specific fields for Sosovalue platform
+    ssl_isverified: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+      comment: 'Verification status for SSL/Sosovalue platform'
+    },
+    ssl_lastaction: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+      comment: 'Last action timestamp for SSL/Sosovalue platform (UNIX timestamp)'
+    },
   },
   {
     tableName: 'emails',

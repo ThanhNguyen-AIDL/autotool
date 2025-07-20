@@ -1,0 +1,187 @@
+# Cursor Rules for Autotool Project
+
+## Core Development Principles
+
+### 1. DO NOT TOUCH OLD CODE
+- **Rule**: Never modify existing working code
+- **Action**: Create new classes, methods, and files instead
+- **Reason**: Prevents bugs and maintains system stability
+
+### 2. KEEP IT SIMPLE
+- **Rule**: Implement the simplest solution that works
+- **Action**: Avoid over-engineering and complex abstractions
+- **Reason**: Easier to maintain, debug, and understand
+
+### 3. CLEAR DOCUMENTATION
+- **Rule**: Document every method and class
+- **Action**: Add JSDoc comments for all functions
+- **Reason**: Makes code self-documenting and easier to maintain
+
+### 4. NO TEST CASES INITIALLY
+- **Rule**: Focus on functionality first, tests later
+- **Action**: Implement working features before adding tests
+- **Reason**: Faster development and validation of concepts
+
+## Playwright to Puppeteer Conversion
+
+### 5. AUTOMATIC CONVERSION RULES
+- **Rule**: When copying Playwright scripts, automatically convert to Puppeteer syntax
+- **Action**: Use the conversion table below for all Playwright methods
+- **Reason**: Ensures compatibility with existing Puppeteer-based automation
+
+### Playwright to Puppeteer Conversion Table:
+
+#### Button and Link Interactions:
+```javascript
+// Playwright → Puppeteer
+page.getByRole('button', { name: 'Log In' }).click()
+// ↓
+page.click('button:has-text("Log In")')
+
+page.getByRole('link', { name: 'Sign Up' }).click()
+// ↓
+page.click('a:has-text("Sign Up")')
+```
+
+#### Form Inputs:
+```javascript
+// Playwright → Puppeteer
+page.getByRole('textbox', { name: 'Enter email' }).click()
+page.getByRole('textbox', { name: 'Enter email' }).fill('email@example.com')
+// ↓
+page.click('input[placeholder*="email"], input[name*="email"], input[type="email"]')
+page.type('input[placeholder*="email"], input[name*="email"], input[type="email"]', 'email@example.com')
+
+page.getByRole('textbox', { name: 'Enter password' }).fill('password123')
+// ↓
+page.type('input[type="password"], input[placeholder*="password"], input[name*="password"]', 'password123')
+```
+
+#### Text and Content:
+```javascript
+// Playwright → Puppeteer
+page.getByText('Some text content').click()
+// ↓
+page.click('text=Some text content')
+
+page.getByLabel('Username').fill('user123')
+// ↓
+page.type('input[aria-label*="Username"], label:has-text("Username") + input', 'user123')
+```
+
+#### Navigation:
+```javascript
+// Playwright → Puppeteer
+await page.goto('https://example.com')
+// ↓
+await page.goto('https://example.com', { waitUntil: 'domcontentloaded' })
+```
+
+#### Waiting and Delays:
+```javascript
+// Playwright → Puppeteer
+await page.waitForSelector('.some-element')
+// ↓
+await page.waitForSelector('.some-element', { timeout: 10000 })
+
+// Always add delays after interactions
+await new Promise(resolve => setTimeout(resolve, 2000))
+```
+
+### Conversion Best Practices:
+1. **Use multiple selectors** for reliability
+2. **Add appropriate delays** after each interaction
+3. **Include error handling** with try-catch blocks
+4. **Use fallback selectors** when exact matches fail
+5. **Test selectors manually** before implementing
+
+## File Naming Conventions
+
+### New SSL Files
+- Use `SSL` prefix for SSL/Sosovalue related files
+- Example: `SSLProfileRepository.js`, `sslService.js`
+
+### Platform-Specific Naming
+- CMC (CoinMarketCap): Use existing naming without prefix
+- SSL (Sosovalue): Use `SSL` prefix for new files
+
+## Code Structure Guidelines
+
+### Repository Pattern
+- Create new repository classes for new platforms
+- Don't modify existing repositories
+- Follow existing patterns and structure
+
+### Service Layer
+- Create new service files for new automation
+- Keep platform-specific logic separate
+- Maintain clear separation of concerns
+
+### Database Models
+- Extend existing models with new fields
+- Don't modify existing field definitions
+- Add clear comments for new fields
+
+## Implementation Workflow
+
+1. **Add new database fields** (if needed)
+2. **Create new repository class** (if needed)
+3. **Create new service class** (if needed)
+4. **Update route handlers** (use new classes)
+5. **Test functionality**
+6. **Document changes**
+
+## Error Handling
+
+- Use try-catch blocks for all async operations
+- Log errors with context information
+- Return meaningful error messages
+- Don't let errors crash the application
+
+## Code Comments
+
+### Required Documentation
+```javascript
+/**
+ * Brief description of what the function does
+ * @param {string} paramName - Description of parameter
+ * @returns {Promise<Object>} Description of return value
+ * @example
+ * // Usage example
+ */
+```
+
+### Field Documentation
+```javascript
+fieldName: {
+  type: DataTypes.TYPE,
+  defaultValue: value,
+  comment: 'Clear description of what this field is for'
+}
+```
+
+## Platform Separation
+
+### CMC (CoinMarketCap)
+- Uses: `isverified`, `lastaction` fields
+- Files: Existing files (don't modify)
+- Endpoint: `/api/task/postcmc`
+
+### SSL (Sosovalue)
+- Uses: `ssl_isverified`, `ssl_lastaction` fields
+- Files: New files with `SSL` prefix
+- Endpoint: `/api/task/postssl`
+
+## Migration Strategy
+
+1. **Phase 1**: Add new functionality alongside existing
+2. **Phase 2**: Test new functionality independently
+3. **Phase 3**: Refactor later when stable (optional)
+4. **Phase 4**: Remove old code only after thorough testing
+
+## Remember
+- **Simple is better than complex**
+- **New code, not modified code**
+- **Document everything**
+- **Test manually before automating**
+- **Always convert Playwright to Puppeteer automatically** 

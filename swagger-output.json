@@ -250,6 +250,39 @@
         }
       }
     },
+    "/api/task/postssl": {
+      "post": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "owner": {
+                  "example": "any"
+                },
+                "category": {
+                  "example": "any"
+                },
+                "postContent": {
+                  "example": "any"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
     "/api/task/launch": {
       "post": {
         "description": "",
