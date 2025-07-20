@@ -7,3 +7,17 @@ CREATE TABLE IF NOT EXISTS prompt_inputs (
 
 
 );
+
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_name = 'prompt_inputs'
+      AND column_name = 'owner'
+  ) THEN
+    ALTER TABLE prompt_inputs
+    ADD COLUMN owner VARCHAR(100);
+  END IF;
+END $$;
