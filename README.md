@@ -11,6 +11,7 @@ A comprehensive web application for managing Chrome browser profiles and automat
 - **Task Scheduling**: Automated task execution with configurable intervals
 - **Cooldown Management**: Rate limiting to prevent account suspension
 - **Logging System**: Comprehensive activity tracking and monitoring
+- **SSL (Sosovalue) Image Posting**: Upload and post images (with optional title) to Sosovalue as part of the post body
 
 ### Key Components
 - **Profile Manager**: Manage browser profiles with authentication details
@@ -28,6 +29,7 @@ A comprehensive web application for managing Chrome browser profiles and automat
 - **Automation**: Puppeteer for browser automation
 - **AI Integration**: Azure OpenAI for content generation
 - **Logging**: Pino logger with structured logging
+- **Image Uploads**: Supports large payloads (up to 50MB) for SSL image posts
 
 ### Frontend (Next.js/React)
 - **Framework**: Next.js 15 with React 18
@@ -128,6 +130,14 @@ A comprehensive web application for managing Chrome browser profiles and automat
    - Prevent account suspension through intelligent timing
    - Sync cooldown settings across systems
 
+5. **SSL (Sosovalue) Image Posting**
+   - In the Task Manager, click "Show SSL Title Input" to reveal SSL options
+   - Enter an optional title for your SSL post
+   - Upload an image using the file input (supports PNG, JPG, etc.)
+   - The image will be posted as part of the body content, immediately after the text
+   - Click "DO POST SSL" to submit the post with both text and image
+   - Large images are supported (up to 50MB payload)
+
 ## 📁 Project Structure
 
 ```
@@ -174,6 +184,7 @@ autotool/
 - Account suspension detection
 - Automated posting with AI-generated content
 - Profile-specific browser sessions
+- **SSL Image Posting**: Posts images as part of the Sosovalue post body
 
 ### Content Generation
 - Azure OpenAI integration for dynamic content
@@ -216,6 +227,7 @@ autotool/
 3. **API Keys**: Secure your Azure OpenAI API keys
 4. **Rate Limiting**: Configure appropriate cooldown periods to avoid account suspension
 5. **Compliance**: Ensure compliance with platform terms of service
+6. **Image Uploads**: Large images are supported for SSL posts (up to 50MB payload)
 
 ## 🐛 Troubleshooting
 
@@ -224,6 +236,7 @@ autotool/
 2. **Database connection**: Verify PostgreSQL credentials
 3. **API errors**: Check Azure OpenAI token validity
 4. **Port conflicts**: Ensure ports 8000 and 8001 are available
+5. **Empty post content**: If your SSL post is missing text, check the browser and server logs for debugging output. Make sure the AI content generation is working and returning non-empty content. See the Task Manager console for details.
 
 ### Debug Mode
 Enable debug logging by modifying the logger configuration in `middlewares/logger.js`
