@@ -181,6 +181,11 @@
             "name": "category",
             "in": "query",
             "type": "string"
+          },
+          {
+            "name": "owner",
+            "in": "query",
+            "type": "string"
           }
         ],
         "responses": {
@@ -267,6 +272,12 @@
                   "example": "any"
                 },
                 "postContent": {
+                  "example": "any"
+                },
+                "title": {
+                  "example": "any"
+                },
+                "imageData": {
                   "example": "any"
                 }
               }

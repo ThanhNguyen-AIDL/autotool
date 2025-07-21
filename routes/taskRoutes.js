@@ -41,8 +41,9 @@ router.post('/postcmc', async (req, res) => {
  * Similar to /postcmc but uses SSL-specific repository and service
  */
 router.post('/postssl', async (req, res) => {
-  const { owner, category, postContent } = req.body;
-  logger.info({ step: 'ssl_validate_input', owner, category, postContent });
+  const { owner, category, postContent, title, imageData } = req.body;
+  logger.info({ step: 'ssl_validate_input', owner, category, postContent: postContent ? 'has content' : 'empty', title, hasImage: !!imageData });
+  logger.info({ step: 'ssl_debug', postContentLength: postContent ? postContent.length : 0, postContentPreview: postContent ? postContent.substring(0, 100) + '...' : 'empty' });
 
   try {
     const emailInfo = await getSSLProfileByOwner(owner);
@@ -52,7 +53,7 @@ router.post('/postssl', async (req, res) => {
         const name = emailInfo?.email.split('@')[0]
         if(await (cooldownRepo.canExecute(category, owner))){
 
-          await doSSLOperation({ name, email: emailInfo?.email, postContent, action: 'post'});
+          await doSSLOperation({ name, email: emailInfo?.email, postContent, category, title, imageData, action: 'post'});
           await cooldownRepo.markExecuted(category, owner)
           if(emailInfo?.email){
               await markSSLLastAction(emailInfo?.email)

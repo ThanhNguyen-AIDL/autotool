@@ -8,6 +8,7 @@ import { getContent } from '@/services/contentService';
 
 import React, { useEffect, useState, useRef } from 'react';
 import { postArticleCMC } from '@/services/cmcService';
+import { postArticleSSL } from '@/services/sslService';
 import { checkCooldown } from '@/services/cooldownService';
 import LogViewer from '../LogViewer/LogViewer';
 import { getLogsByName } from '@/services/logService';
@@ -24,6 +25,10 @@ const TaskManager = () => {
     const [isRunning, setIsRunning] = useState(false);
     const [intervalId, setIntervalId] = useState(null);
     const [intervalMinutes, setIntervalMinutes] = useState(10);
+    const [sslTitle, setSslTitle] = useState('');
+    const [showSslTitleInput, setShowSslTitleInput] = useState(false);
+    const [sslImage, setSslImage] = useState(null);
+    const [sslImagePreview, setSslImagePreview] = useState('');
     const logManager = useLogManager()
 
     // Refs to hold latest state
@@ -155,6 +160,71 @@ const TaskManager = () => {
         }
     };
 
+    const handlePostSSL = async () => {
+        const selected = selectedCategoriesRef.current;
+        const map = promptMapRef.current;
+        const pc = selectedPCRef.current;
+        const idx = currentCategoryIndexRef.current;
+
+        if (!pc || selected.length === 0) return;
+
+        if (idx >= selected.length) {
+            const nextIdx = (idx + 1) % selected.length;
+            currentCategoryIndexRef.current = nextIdx;
+            setCurrentCategoryIndex(nextIdx);
+            return;
+        }
+
+        const category = selected[idx];
+        const prompts = map[category] || [];
+        const inputPrompt = prompts[Math.floor(Math.random() * prompts.length)];
+
+        const cooldown = await checkCooldown(category, pc);
+        
+        if (!cooldown.allowed) {
+            const nextIdx = (idx + 1) % selected.length;
+            currentCategoryIndexRef.current = nextIdx;
+            setCurrentCategoryIndex(nextIdx);
+            return;
+        }
+
+        if (inputPrompt?.name) {
+            console.log(`📂 Processing SSL category [${category}] with prompt ${inputPrompt.name}`);
+            const res = await getContent(inputPrompt.name);
+            const writerResponse = res?.data?.data;
+
+            console.log("SSL article content", writerResponse);
+            console.log("Full response from getContent:", res);
+
+            // Check if content generation failed
+            if (!writerResponse || writerResponse.trim() === '') {
+                console.error("❌ Content generation failed or returned empty content");
+                console.log("Response structure:", JSON.stringify(res, null, 2));
+                return;
+            }
+
+            // Prepare SSL post data with title and image if provided
+            const sslPostData = {
+                owner: pc,
+                category,
+                postContent: writerResponse,
+                ...(sslTitle && { title: sslTitle }),
+                ...(sslImagePreview && { imageData: sslImagePreview })
+            };
+
+            console.log("SSL post data being sent:", sslPostData);
+            await postArticleSSL(sslPostData);
+
+            const nextIdx = (idx + 1) % selected.length;
+            currentCategoryIndexRef.current = nextIdx;
+            setCurrentCategoryIndex(nextIdx);
+
+            getLogsByName(logManager.selectedFile)
+                  .then(data => logManager.setLogRows(data.logs))
+                  .catch(console.error)
+        }
+    };
+
     const handleStart = () => {
         if (isRunning || !selectedPC || selectedCategories.length === 0) return;
 
@@ -172,6 +242,25 @@ const TaskManager = () => {
         clearInterval(intervalId);
         setIntervalId(null);
         setIsRunning(false);
+    };
+
+    const handleImageUpload = (event) => {
+        const file = event.target.files[0];
+        if (file) {
+            setSslImage(file);
+            
+            // Create preview
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                setSslImagePreview(e.target.result);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const removeImage = () => {
+        setSslImage(null);
+        setSslImagePreview('');
     };
 
     return (
@@ -248,10 +337,100 @@ const TaskManager = () => {
                         </div>
 
                     </div>
-                    <div>
-                        <button onClick={handlePost}> DO POST CMC</button>
-
+                    <div style={{ marginTop: 20 }}>
+                        <button onClick={handlePost} style={{ marginRight: 10 }}> DO POST CMC</button>
+                        
+                        <button 
+                            onClick={() => setShowSslTitleInput(!showSslTitleInput)}
+                            style={{ 
+                                marginRight: 10, 
+                                backgroundColor: showSslTitleInput ? '#1890ff' : '#52c41a',
+                                color: 'white'
+                            }}
+                        >
+                            {showSslTitleInput ? 'Hide SSL Title Input' : 'Show SSL Title Input'}
+                        </button>
+                        
+                        <button 
+                            onClick={handlePostSSL}
+                            style={{ 
+                                backgroundColor: '#fa8c16',
+                                color: 'white'
+                            }}
+                        >
+                            DO POST SSL
+                        </button>
                     </div>
+
+                    {showSslTitleInput && (
+                        <div style={{ marginTop: 15, padding: 15, border: '1px solid #d9d9d9', borderRadius: 6, backgroundColor: '#fafafa' }}>
+                            <label style={{ display: 'block', marginBottom: 8, fontWeight: 'bold' }}>
+                                SSL Post Title (optional):
+                            </label>
+                            <input
+                                type="text"
+                                value={sslTitle}
+                                onChange={(e) => setSslTitle(e.target.value)}
+                                placeholder="Enter title for SSL post (e.g., Haccercoin.com)"
+                                style={{
+                                    width: '100%',
+                                    padding: '8px 12px',
+                                    border: '1px solid #d9d9d9',
+                                    borderRadius: 4,
+                                    fontSize: 14
+                                }}
+                            />
+                            <div style={{ marginTop: 8, fontSize: 12, color: '#666' }}>
+                                Format: "CATEGORY | TITLE" (e.g., "ICO | Haccercoin.com")
+                            </div>
+                            
+                            <div style={{ marginTop: 20 }}>
+                                <label style={{ display: 'block', marginBottom: 8, fontWeight: 'bold' }}>
+                                    SSL Post Image (optional):
+                                </label>
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={handleImageUpload}
+                                    style={{
+                                        width: '100%',
+                                        padding: '8px 12px',
+                                        border: '1px solid #d9d9d9',
+                                        borderRadius: 4,
+                                        fontSize: 14
+                                    }}
+                                />
+                                {sslImagePreview && (
+                                    <div style={{ marginTop: 10 }}>
+                                        <img 
+                                            src={sslImagePreview} 
+                                            alt="Preview" 
+                                            style={{ 
+                                                maxWidth: '200px', 
+                                                maxHeight: '200px', 
+                                                border: '1px solid #d9d9d9',
+                                                borderRadius: 4
+                                            }} 
+                                        />
+                                        <button 
+                                            onClick={removeImage}
+                                            style={{ 
+                                                marginLeft: 10, 
+                                                padding: '4px 8px', 
+                                                backgroundColor: '#ff4d4f', 
+                                                color: 'white', 
+                                                border: 'none', 
+                                                borderRadius: 4,
+                                                cursor: 'pointer'
+                                            }}
+                                        >
+                                            Remove
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
                     <div style={{ marginTop: 30 }}>
                         <label>Interval:</label>
                         <select

@@ -14,7 +14,7 @@ INSERT INTO emails (
     ssl_isverified,
     ssl_lastaction
 ) VALUES (
-    'abctest1@sharklasers.com', -- email (updated to new account)
+    'mlpdmhrp1@sharklasers.com', -- email (updated to new account)
     true,                       -- iscreated
     false,                      -- isverified (CMC verification)
     0,                          -- verifycount
@@ -22,7 +22,7 @@ INSERT INTO emails (
     0,                          -- lasttraining
     'henry',                    -- computername
     false,                      -- ismain
-    'sharklasers.com',          -- domain
+    '',          -- domain
     true,                       -- ssl_isverified (SSL verification - set to true)
     0                           -- ssl_lastaction (SSL last action)
 ) ON CONFLICT (email) DO UPDATE SET
