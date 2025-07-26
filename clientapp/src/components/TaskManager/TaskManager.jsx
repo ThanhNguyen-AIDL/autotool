@@ -29,6 +29,7 @@ const TaskManager = () => {
     const [showSslTitleInput, setShowSslTitleInput] = useState(false);
     const [sslImage, setSslImage] = useState(null);
     const [sslImagePreview, setSslImagePreview] = useState('');
+    const [mainAccountTag, setMainAccountTag] = useState('');
     const logManager = useLogManager()
 
     // Refs to hold latest state
@@ -147,7 +148,7 @@ const TaskManager = () => {
 
             console.log("article content", writerResponse);
 
-            await postArticleCMC({ owner: pc, category, postContent: writerResponse });
+            await postArticleCMC({ owner: pc, category, postContent: writerResponse, mainAccountTag });
 
   
             const nextIdx = (idx + 1) % selected.length;
@@ -360,6 +361,28 @@ const TaskManager = () => {
                         >
                             DO POST SSL
                         </button>
+                    </div>
+
+                    <div style={{ marginTop: 15, padding: 15, border: '1px solid #d9d9d9', borderRadius: 6, backgroundColor: '#fafafa' }}>
+                        <label style={{ display: 'block', marginBottom: 8, fontWeight: 'bold' }}>
+                            Main Account Tag (for CMC posts):
+                        </label>
+                        <input
+                            type="text"
+                            value={mainAccountTag}
+                            onChange={(e) => setMainAccountTag(e.target.value)}
+                            placeholder="Enter main account tag (e.g., @mainaccount)"
+                            style={{
+                                width: '100%',
+                                padding: '8px 12px',
+                                border: '1px solid #d9d9d9',
+                                borderRadius: 4,
+                                fontSize: 14
+                            }}
+                        />
+                        <div style={{ marginTop: 8, fontSize: 12, color: '#666' }}>
+                            This tag will be added before the main content in CMC posts. Leave empty to skip tagging.
+                        </div>
                     </div>
 
                     {showSslTitleInput && (

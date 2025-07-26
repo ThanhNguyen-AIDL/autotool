@@ -7,6 +7,7 @@ A comprehensive web application for managing Chrome browser profiles and automat
 ### Core Functionality
 - **Chrome Profile Management**: Create, edit, delete, and launch Chrome browser profiles
 - **Automated Social Media Posting**: Automated posting to CoinMarketCap community
+- **Main Account Tagging for CMC Posts**: Optionally tag a main account in CMC posts. The system will post 'follow our channel at' on one line, then the tag (e.g., @mainaccount) on the next line, before the main content.
 - **AI Content Generation**: Integration with Azure OpenAI for dynamic content creation
 - **Task Scheduling**: Automated task execution with configurable intervals
 - **Cooldown Management**: Rate limiting to prevent account suspension
@@ -124,6 +125,12 @@ A comprehensive web application for managing Chrome browser profiles and automat
    - Configure automated posting tasks
    - Set intervals for task execution
    - Monitor task execution through logs
+   - **Tagging Main Account in CMC Posts**: In the Task Manager, enter a main account tag (e.g., @mainaccount) in the 'Main Account Tag' field. When posting to CMC, the system will add:
+
+     follow our channel at
+     @mainaccount
+
+   before the main post content, each on a separate line.
 
 4. **Cooldown Management**
    - Configure rate limits per computer and category

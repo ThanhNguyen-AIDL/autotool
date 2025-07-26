@@ -82,7 +82,7 @@ async function checkSuspendedAcct(page) {
   }
 }
 
-async function postComment(page, postContent) {
+async function postComment(page, postContent, mainAccountTag = "") {
     let editorInputsCommunity, baseEditor, editElement;
 
     try {
@@ -123,6 +123,17 @@ async function postComment(page, postContent) {
             const buttons = Array.from(document.querySelectorAll('button'));
             return buttons.find(btn => btn.textContent.trim().toLowerCase() === 'post');
         });
+        
+         
+        // Add main account tag if provided
+        if (mainAccountTag && mainAccountTag.trim()) {
+            const tagText = `follow our channel at ${mainAccountTag}`;
+            await editElement.type(" ", { delay: 100 });
+            await editElement.type(tagText, { delay: 100 });
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            await page.keyboard.press('Enter');
+            await new Promise(resolve => setTimeout(resolve, 1000));
+        }    
 
         if (postButton) {
             logger.info({message:'POST CLICKED'});

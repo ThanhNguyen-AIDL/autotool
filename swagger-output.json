@@ -240,6 +240,9 @@
                 },
                 "postContent": {
                   "example": "any"
+                },
+                "mainAccountTag": {
+                  "example": "any"
                 }
               }
             }
