@@ -30,7 +30,8 @@ const TaskManager = () => {
     const [showSslTitleInput, setShowSslTitleInput] = useState(false);
     const [sslImage, setSslImage] = useState(null);
     const [sslImagePreview, setSslImagePreview] = useState('');
-    const [mainAccountTag, setMainAccountTag] = useState('');
+    // Replace single mainAccountTag with category-specific tags
+    const [categoryTags, setCategoryTags] = useState({});
     const [cmcImage, setCmcImage] = useState(null);
     const [cmcImagePreview, setCmcImagePreview] = useState('');
     const logManager = useLogManager()
@@ -40,6 +41,7 @@ const TaskManager = () => {
     const promptMapRef = useRef({});
     const selectedPCRef = useRef();
     const currentCategoryIndexRef = useRef(0);
+    const categoryTagsRef = useRef({});
 
     const [collapsedCategories, setCollapsedCategories] = useState(true);
 
@@ -72,10 +74,26 @@ const TaskManager = () => {
     }, [currentCategoryIndex]);
 
     useEffect(() => {
+        categoryTagsRef.current = categoryTags;
+    }, [categoryTags]);
+
+    useEffect(() => {
         return () => {
             if (intervalId) clearInterval(intervalId);
         };
     }, [intervalId]);
+
+    /**
+     * Update tag for a specific category
+     * @param {string} category - The category name
+     * @param {string} tag - The tag value to set
+     */
+    const updateCategoryTag = (category, tag) => {
+        setCategoryTags(prev => ({
+            ...prev,
+            [category]: tag
+        }));
+    };
 
     const fetchComputerNames = async () => {
         try {
@@ -157,11 +175,14 @@ const TaskManager = () => {
 
             console.log("article content", writerResponse);
 
+            // Get the tag for the current category
+            const currentCategoryTag = categoryTagsRef.current[category] || '';
+
             await postArticleCMC({ 
                 owner: pc, 
                 category, 
                 postContent: writerResponse, 
-                mainAccountTag,
+                mainAccountTag: currentCategoryTag,
                 ...(cmcImagePreview && { imageData: cmcImagePreview })
             });
 
@@ -403,24 +424,33 @@ const TaskManager = () => {
 
                     <div style={{ marginTop: 15, padding: 15, border: '1px solid #d9d9d9', borderRadius: 6, backgroundColor: '#fafafa' }}>
                         <label style={{ display: 'block', marginBottom: 8, fontWeight: 'bold' }}>
-                            Main Account Tag (for CMC posts):
+                            Category Tags (for CMC posts):
                         </label>
-                        <input
-                            type="text"
-                            value={mainAccountTag}
-                            onChange={(e) => setMainAccountTag(e.target.value)}
-                            placeholder="Enter main account tag (e.g., @mainaccount)"
-                            style={{
-                                width: '100%',
-                                padding: '8px 12px',
-                                border: '1px solid #d9d9d9',
-                                borderRadius: 4,
-                                fontSize: 14
-                            }}
-                        />
-                        <div style={{ marginTop: 8, fontSize: 12, color: '#666' }}>
-                            This tag will be added before the main content in CMC posts. Leave empty to skip tagging.
+                        <div style={{ marginTop: 8, fontSize: 12, color: '#666', marginBottom: 15 }}>
+                            Set specific tags for each selected category. Tags will be added before the main content in CMC posts.
                         </div>
+                        
+                        {/* Category-specific tag inputs - only show for selected categories */}
+                        {selectedCategories.map(category => (
+                            <div key={category} style={{ marginBottom: 15 }}>
+                                <label style={{ display: 'block', marginBottom: 5, fontWeight: 'bold', color: '#333' }}>
+                                    {category}:
+                                </label>
+                                <input
+                                    type="text"
+                                    value={categoryTags[category] || ''}
+                                    onChange={(e) => updateCategoryTag(category, e.target.value)}
+                                    placeholder={`Enter tag for ${category} (e.g., @${category}_)`}
+                                    style={{
+                                        width: '100%',
+                                        padding: '8px 12px',
+                                        border: '1px solid #d9d9d9',
+                                        borderRadius: 4,
+                                        fontSize: 14
+                                    }}
+                                />
+                            </div>
+                        ))}
                         
                         <div style={{ marginTop: 20 }}>
                             <label style={{ display: 'block', marginBottom: 8, fontWeight: 'bold' }}>
