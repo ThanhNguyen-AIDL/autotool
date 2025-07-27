@@ -1,4 +1,6 @@
 
+const path = require('path');
+const fs = require('fs');
 const trendingTokens = ['$ETH', '$SOL', '$USDT', '$BTC']; // example
 const repostText = ['Nice project!', 'Check this out!', 'Bullish on this.', '🔥🔥🔥'];
 const logger = require('../middlewares/logger')
@@ -82,7 +84,7 @@ async function checkSuspendedAcct(page) {
   }
 }
 
-async function postComment(page, postContent, mainAccountTag = "") {
+async function postComment(page, postContent, mainAccountTag = "", imageData = "") {
     let editorInputsCommunity, baseEditor, editElement;
 
     try {
@@ -117,14 +119,7 @@ async function postComment(page, postContent, mainAccountTag = "") {
             
         }
         await page.keyboard.press('Enter');
-        await editElement.type(postContent, { delay: 50 });
-
-        const postButton = await page.evaluateHandle(() => {
-            const buttons = Array.from(document.querySelectorAll('button'));
-            return buttons.find(btn => btn.textContent.trim().toLowerCase() === 'post');
-        });
         
-         
         // Add main account tag if provided
         if (mainAccountTag && mainAccountTag.trim()) {
             const tagText = `follow our channel at ${mainAccountTag}`;
@@ -133,7 +128,20 @@ async function postComment(page, postContent, mainAccountTag = "") {
             await new Promise(resolve => setTimeout(resolve, 1000));
             await page.keyboard.press('Enter');
             await new Promise(resolve => setTimeout(resolve, 1000));
-        }    
+        }
+        
+        // Add image if provided (before text content)
+        if (imageData && imageData.trim()) {
+            await uploadImageToCMCPost(page, imageData);
+            await new Promise(resolve => setTimeout(resolve, 2000));
+        }
+        
+        await editElement.type(postContent, { delay: 50 });
+        
+        const postButton = await page.evaluateHandle(() => {
+            const buttons = Array.from(document.querySelectorAll('button'));
+            return buttons.find(btn => btn.textContent.trim().toLowerCase() === 'post');
+        });
 
         if (postButton) {
             logger.info({message:'POST CLICKED'});
@@ -161,11 +169,93 @@ function shuffle(array) {
     .map(({ value }) => value);
 }
 
+/**
+ * Upload image to CMC post using file input
+ * @param {Object} page - Puppeteer page object
+ * @param {string} imageData - Base64 image data
+ * @returns {Promise<boolean>} True if image upload successful
+ */
+async function uploadImageToCMCPost(page, imageData) {
+  try {
+    console.log('Starting CMC image upload process...');
+    
+    // Convert base64 to buffer and create temporary file
+    const buffer = Buffer.from(imageData.split(',')[1], 'base64');
+    const tempFilePath = path.join(__dirname, 'temp_image.jpg');
+    fs.writeFileSync(tempFilePath, buffer);
+    
+    console.log('Temporary file created:', tempFilePath);
+    
+    // First, try to find a file input element
+    let fileInput = await page.$('input[type="file"]');
+    
+    // If no file input found, look for upload buttons
+    if (!fileInput) {
+      console.log('No file input found, looking for upload buttons...');
+      
+      // Look for buttons with image/upload related text or aria-labels
+      const uploadButton = await page.evaluateHandle(() => {
+        const buttons = Array.from(document.querySelectorAll('button'));
+        return buttons.find(btn => {
+          const text = btn.textContent.toLowerCase();
+          const ariaLabel = btn.getAttribute('aria-label')?.toLowerCase() || '';
+          const className = btn.className.toLowerCase();
+          
+          return text.includes('image') || text.includes('upload') || text.includes('attach') ||
+                 ariaLabel.includes('image') || ariaLabel.includes('upload') || ariaLabel.includes('attach') ||
+                 className.includes('image') || className.includes('upload') || className.includes('attach');
+        });
+      });
+      
+      if (uploadButton) {
+        console.log('Found upload button, clicking...');
+        await uploadButton.click();
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        // Try to find file input again after clicking the button
+        fileInput = await page.$('input[type="file"]');
+      }
+    }
+    
+    // If we found a file input, upload the file
+    if (fileInput) {
+      console.log('Found file input, uploading image...');
+      await fileInput.uploadFile(tempFilePath);
+      await new Promise(resolve => setTimeout(resolve, 3000));
+      console.log('Image uploaded successfully');
+      
+      // Clean up temporary file
+      fs.unlinkSync(tempFilePath);
+      return true;
+    } else {
+      console.log('No file input found for image upload');
+      
+      // Clean up temporary file
+      fs.unlinkSync(tempFilePath);
+      return false;
+    }
+    
+  } catch (error) {
+    console.error('Error during CMC image upload:', error.message);
+    // Clean up temporary file if it exists
+    try {
+      const tempFilePath = path.join(__dirname, 'temp_image.jpg');
+      if (fs.existsSync(tempFilePath)) {
+        fs.unlinkSync(tempFilePath);
+      }
+    } catch (cleanupError) {
+      console.error('Error cleaning up temporary file:', cleanupError.message);
+    }
+    return false;
+  }
+}
+
 
 
 module.exports = {
     canLogin,
     doLogin,
     checkSuspendedAcct,
-    postComment
+    postComment,
+    uploadImageToCMCPost
 }

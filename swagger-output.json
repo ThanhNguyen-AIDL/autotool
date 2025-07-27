@@ -243,6 +243,9 @@
                 },
                 "mainAccountTag": {
                   "example": "any"
+                },
+                "imageData": {
+                  "example": "any"
                 }
               }
             }

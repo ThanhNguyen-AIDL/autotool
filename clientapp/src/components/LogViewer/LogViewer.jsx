@@ -64,7 +64,7 @@ export default function LogViewer() {
         <select
           id="log-select"
           className="border rounded px-3 py-2"
-          value={logManager?.selectedFile}
+          value={logManager?.selectedFile || ''}
           onChange={(e) => {
             logManager?.setSelectedName(e.target.value);
             setPage(1);

@@ -16,8 +16,9 @@ import { useLogManager } from '@/redux/utils/logUtitls';
 
 
 const TaskManager = () => {
+    const [mounted, setMounted] = useState(false);
     const [computerNames, setComputerNames] = useState([]);
-    const [selectedPC, setSelectdPC] = useState();
+    const [selectedPC, setSelectdPC] = useState('');
     const { categories, setCategories } = useCategories();
     const [promptMap, setPromptMap] = useState({});
     const [selectedCategories, setSelectedCategories] = useState([]);
@@ -30,6 +31,8 @@ const TaskManager = () => {
     const [sslImage, setSslImage] = useState(null);
     const [sslImagePreview, setSslImagePreview] = useState('');
     const [mainAccountTag, setMainAccountTag] = useState('');
+    const [cmcImage, setCmcImage] = useState(null);
+    const [cmcImagePreview, setCmcImagePreview] = useState('');
     const logManager = useLogManager()
 
     // Refs to hold latest state
@@ -42,9 +45,15 @@ const TaskManager = () => {
 
 
     useEffect(() => {
-        fetchComputerNames();
-        fetchCategories();
+        setMounted(true);
     }, []);
+
+    useEffect(() => {
+        if (mounted) {
+            fetchComputerNames();
+            fetchCategories();
+        }
+    }, [mounted]);
 
     useEffect(() => {
         selectedCategoriesRef.current = selectedCategories;
@@ -148,7 +157,13 @@ const TaskManager = () => {
 
             console.log("article content", writerResponse);
 
-            await postArticleCMC({ owner: pc, category, postContent: writerResponse, mainAccountTag });
+            await postArticleCMC({ 
+                owner: pc, 
+                category, 
+                postContent: writerResponse, 
+                mainAccountTag,
+                ...(cmcImagePreview && { imageData: cmcImagePreview })
+            });
 
   
             const nextIdx = (idx + 1) % selected.length;
@@ -263,6 +278,29 @@ const TaskManager = () => {
         setSslImage(null);
         setSslImagePreview('');
     };
+
+    const handleCmcImageUpload = (event) => {
+        const file = event.target.files[0];
+        if (file) {
+            setCmcImage(file);
+            
+            // Create preview
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                setCmcImagePreview(e.target.result);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const removeCmcImage = () => {
+        setCmcImage(null);
+        setCmcImagePreview('');
+    };
+
+    if (!mounted) {
+        return <div>Loading...</div>;
+    }
 
     return (
         <div>
@@ -382,6 +420,52 @@ const TaskManager = () => {
                         />
                         <div style={{ marginTop: 8, fontSize: 12, color: '#666' }}>
                             This tag will be added before the main content in CMC posts. Leave empty to skip tagging.
+                        </div>
+                        
+                        <div style={{ marginTop: 20 }}>
+                            <label style={{ display: 'block', marginBottom: 8, fontWeight: 'bold' }}>
+                                CMC Post Image (optional):
+                            </label>
+                            <input
+                                type="file"
+                                accept="image/*"
+                                onChange={handleCmcImageUpload}
+                                style={{
+                                    width: '100%',
+                                    padding: '8px 12px',
+                                    border: '1px solid #d9d9d9',
+                                    borderRadius: 4,
+                                    fontSize: 14
+                                }}
+                            />
+                            {cmcImagePreview && (
+                                <div style={{ marginTop: 10 }}>
+                                    <img 
+                                        src={cmcImagePreview} 
+                                        alt="Preview" 
+                                        style={{ 
+                                            maxWidth: '200px', 
+                                            maxHeight: '200px', 
+                                            border: '1px solid #d9d9d9',
+                                            borderRadius: 4
+                                        }} 
+                                    />
+                                    <button 
+                                        onClick={removeCmcImage}
+                                        style={{ 
+                                            marginLeft: 10, 
+                                            padding: '4px 8px', 
+                                            backgroundColor: '#ff4d4f', 
+                                            color: 'white', 
+                                            border: 'none', 
+                                            borderRadius: 4,
+                                            cursor: 'pointer'
+                                        }}
+                                    >
+                                        Remove
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     </div>
 

@@ -144,7 +144,7 @@ export default function CooldownManager() {
                   <td className="border px-3 py-2">
                     <select
                       className="border rounded px-2 py-1 w-28"
-                      value={(editing[item.id] ?? item?.cooldownPeriod)?.toString()}
+                      value={(editing[item.id] ?? item?.cooldownPeriod)?.toString() || ''}
                       onChange={(e) =>
                         setEditing((prev) => ({
                           ...prev,

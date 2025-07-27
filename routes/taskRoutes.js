@@ -9,8 +9,8 @@ const logger = require('../middlewares/logger');
 const router = express.Router();
 
 router.post('/postcmc', async (req, res) => {
-  const { owner, category, postContent, mainAccountTag } = req.body;
-  logger.info({ step: 'validate_input', owner, category, postContent, mainAccountTag });
+  const { owner, category, postContent, mainAccountTag, imageData } = req.body;
+  logger.info({ step: 'validate_input', owner, category, postContent, mainAccountTag, hasImage: !!imageData });
 
   try {
     const emailInfo = await getProfileByOwner(owner);
@@ -20,7 +20,7 @@ router.post('/postcmc', async (req, res) => {
         const name = emailInfo?.email.split('@')[0]
         if(await (cooldownRepo.canExecute(category, owner))){
 
-          await doPostArticleCMC({ name, email: emailInfo?.email, postContent, mainAccountTag});
+          await doPostArticleCMC({ name, email: emailInfo?.email, postContent, mainAccountTag, imageData});
           await cooldownRepo.markExecuted(category, owner)
           if(emailInfo?.email){
               await markLastAction(emailInfo?.email)

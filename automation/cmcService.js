@@ -11,6 +11,7 @@ async function doPostArticleCMC({
   email,
   postContent = "",
   mainAccountTag = "",
+  imageData = "",
 }) {
   const profilePath = path.resolve(process.cwd(), 'profiles', name);
   const chromePath = process.env.CHROME_PATH || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
@@ -53,7 +54,7 @@ async function doPostArticleCMC({
   await page.goto("https://coinmarketcap.com/community", { waitUntil: 'domcontentloaded' });
 
 
-  await postComment(page, postContent, mainAccountTag)
+  await postComment(page, postContent, mainAccountTag, imageData)
 
   await browser.close();
 

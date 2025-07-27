@@ -6,17 +6,24 @@ import { getPromptList, createPrompt, deletePrompt } from '@/services/promptServ
 import React, { useEffect, useState } from 'react';
 
 const PromptManager = () => { 
+  const [mounted, setMounted] = useState(false);
   const {categories} = useCategories()
   const [prompts, setPrompts] = useState([]);
   const [form, setForm] = useState({ name: '', category: '', owner: '' });
   const [filter, setFilter] = useState('');
 
   const [computerNames, setComputerNames] = useState([]);
-  const [selectedPC, setSelectdPC] = useState();
+  const [selectedPC, setSelectdPC] = useState('');
 
   useEffect(() => {
-    fetchComputerNames();
+    setMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (mounted) {
+      fetchComputerNames();
+    }
+  }, [mounted]);
 
 
   useEffect(() => {
@@ -74,6 +81,10 @@ const PromptManager = () => {
       console.error(err.message);
     }
   };
+
+  if (!mounted) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <div style={{ maxWidth: 600, margin: 'auto' }}>
