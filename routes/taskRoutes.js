@@ -1,11 +1,12 @@
 const express = require('express');
 const cooldownRepo = require('../repositories/CooldownRepository')
-const { getProfileByOwner, markLastAction } = require('../repositories/ProfileRepository');
+const { getProfileByOwner, markLastAction, getProfileByEmail } = require('../repositories/ProfileRepository');
 const { getProfileByOwner: getSSLProfileByOwner, markLastAction: markSSLLastAction } = require('../repositories/SSLProfileRepository');
 const {doPostArticleCMC } =require('../automation/cmcService')
 const { doSSLOperation } =require('../automation/sslService')
 const { launchProfile } =require('../automation/launcher')
 const logger = require('../middlewares/logger');
+const { launchProfileByUrl, launchCMCbyEmail } = require('../automation/worker');
 const router = express.Router();
 
 router.post('/postcmc', async (req, res) => {
@@ -85,6 +86,21 @@ router.post('/launch', async (req, res) => {
   }
 });
 
+router.post('/launchbyemail', async (req, res) => {
+  const { email, url } = req.body;
 
+  try {
+    const emailInfo = await getProfileByEmail(email);
+    if(emailInfo){      
+        const name = emailInfo?.email.split('@')[0]
+        await launchCMCbyEmail({ name, email});
+
+      }
+
+    res.json({ success: true });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
 
 module.exports = router;

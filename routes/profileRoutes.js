@@ -21,6 +21,19 @@ router.get('/', async (req, res) => {
     }
 });
 
+router.get('/mainList', async (req, res) => {
+    try {
+      const { owner } = req.query;
+
+      const profiles = await ProfileRepo.getMainAcctByOwner(owner);
+      res.json(profiles);
+       
+    } catch (error) {
+        res.status(500).json({ error: "Error occurs: " + error.message });
+    }
+});
+
+
 
 router.post('/', async (req, res) => {
   try {

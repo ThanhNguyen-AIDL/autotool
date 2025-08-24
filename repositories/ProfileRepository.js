@@ -8,6 +8,20 @@ class ProfileRepository {
   }
 
 
+
+  async getProfileByEmail(email) {
+
+    const whereClause = {
+      email: email,
+      isverified: true,
+    }
+    const result = await ProfileEmail.findOne({
+      where: whereClause,
+    });
+
+    return result;
+  }
+
   async getProfileByOwner(computerName, periodRange = 86400) {
     const currentTimestamp = Math.floor(Date.now() / 1000);
     const threshold = currentTimestamp - periodRange;
@@ -15,9 +29,19 @@ class ProfileRepository {
     const whereClause = {
       computername: computerName,
       isverified: true,
-      [Op.or]: [
-        { lastaction: { [Op.lt]: threshold } },
-        { lastaction: null }
+      [Op.and]: [
+        {
+          [Op.or]: [
+            { lastaction: { [Op.lt]: threshold } },
+            { lastaction: null }
+          ]
+        },
+        {
+          [Op.or]: [
+            { ismain: null },
+            { ismain: false }
+          ]
+        }
       ]
     };
 
@@ -33,6 +57,26 @@ class ProfileRepository {
 
     return result;
   }
+
+
+  async getMainAcctByOwner(computerName) {
+
+    const whereClause = {
+      computername: computerName,
+      isverified: true,
+      ismain: true
+    };
+
+    const count = await ProfileEmail.count({ where: whereClause });
+    if (count === 0) return [];
+
+    const result = await ProfileEmail.findAll({
+      where: whereClause,
+    });
+
+    return result;
+  }
+
 
 
 
@@ -67,6 +111,12 @@ class ProfileRepository {
 
   async delete(id) {
     return await ProfileEmail.destroy({ where: { id } });
+  }
+
+  async deleteByEmail(email) {
+    return await ProfileEmail.destroy({
+      where: { email }
+    });
   }
 
   async getCompunterNames() {

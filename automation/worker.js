@@ -7,7 +7,7 @@ const logger = require('../middlewares/logger');
 const ProfileRepository = require('../repositories/ProfileRepository');
 dotenv.config()
 
-async function doPostArticleCMC({
+async function launchCMCbyEmail({
   name,
   email,
   postContent = "",
@@ -47,22 +47,15 @@ async function doPostArticleCMC({
     logger.info({message:`Account suspended ${email}`})
     await ProfileRepository.deleteByEmail(email);
     await browser.close();
+    return
   }
-
-  await page.goto("https://coinmarketcap.com/community", { waitUntil: 'domcontentloaded' });
-  await new Promise(resolve => setTimeout(resolve, 2000));
-  await page.goto("https://coinmarketcap.com/community", { waitUntil: 'domcontentloaded' });
-  await new Promise(resolve => setTimeout(resolve, 2000));
-  await page.goto("https://coinmarketcap.com/community", { waitUntil: 'domcontentloaded' });
-
-
-  await postComment(page, postContent, mainAccountTag, imageData)
-
-  await browser.close();
 
   return browser;
 }
 
+
+
+
 module.exports = {
-  doPostArticleCMC
+  launchCMCbyEmail
 };

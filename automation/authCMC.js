@@ -68,8 +68,8 @@ async function checkSuspendedAcct(page) {
 
     // Wait until page contains "Account suspended"
     const isSuspended = await page.waitForFunction(
-      () => document.body.innerText.includes('Account suspended'),
-      { timeout: 10000 }
+      () => document.body.innerText.includes('suspend'),
+      { timeout: 60000 }
     );
 
     return !!isSuspended;

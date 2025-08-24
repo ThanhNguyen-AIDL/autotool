@@ -42,7 +42,7 @@ const PromptCategoryManager = () => {
   
   const fetchCategories = async () => {
     try {
-      debugger
+      
       const data = await getPromptCategories(queryParams.get('owner'));
       setCategories(data);
     } catch (err) {
