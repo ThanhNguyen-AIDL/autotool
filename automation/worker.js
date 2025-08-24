@@ -46,7 +46,24 @@ async function launchCMCbyEmail({
   if(suspended){
     logger.info({message:`Account suspended ${email}`})
     await ProfileRepository.deleteByEmail(email);
+
+    if (fs.existsSync(profilePath)) {
+      const stat = fs.lstatSync(profilePath);
+
+      if (stat.isDirectory()) {
+        // recursive remove for folder
+        fs.rmSync(profilePath, { recursive: true, force: true });
+        logger.info(`Removed folder: ${profilePath}`);
+      } else {
+        // remove single file
+        fs.unlinkSync(profilePath);
+        logger.info(`Removed file: ${profilePath}`);
+      }
+    } else {
+      logger.info(`Path not found, skipping: ${profilePath}`);
+    }
     await browser.close();
+    
     return
   }
 
