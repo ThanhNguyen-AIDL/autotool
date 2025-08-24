@@ -5,3 +5,6 @@ CREATE TABLE IF NOT EXISTS prompt_categories (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP -- Timestamp for when the record was last updated
 
 );
+
+ALTER TABLE prompt_categories
+ADD COLUMN IF NOT EXISTS owner VARCHAR(100);

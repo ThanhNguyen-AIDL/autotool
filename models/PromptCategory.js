@@ -13,6 +13,9 @@ const PromptCategory = sequelize.define(
     name: {
       type: DataTypes.STRING(100),
     },
+    owner: {
+      type: DataTypes.STRING(100),
+    },
     created_at: {
       type: DataTypes.DATE,
     },

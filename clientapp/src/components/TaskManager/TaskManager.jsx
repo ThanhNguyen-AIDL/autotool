@@ -35,6 +35,7 @@ const TaskManager = () => {
     const [cmcImage, setCmcImage] = useState(null);
     const [cmcImagePreview, setCmcImagePreview] = useState('');
     const logManager = useLogManager()
+    const queryParams = new URLSearchParams(window.location.search);
 
     // Refs to hold latest state
     const selectedCategoriesRef = useRef([]);
@@ -106,7 +107,7 @@ const TaskManager = () => {
 
     const fetchCategories = async () => {
         try {
-            const data = await getPromptCategories();
+            const data = await getPromptCategories(queryParams.get('owner'));
             setCategories(data);
         } catch (err) {
             console.error('Failed to load categories');

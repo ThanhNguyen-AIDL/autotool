@@ -3,19 +3,47 @@
 import React, { useState, useEffect } from 'react';
 import { getPromptCategories, createPromptCategory, deleteCategory } from '@/services/promptCatService';
 import { useCategories } from '@/redux/utils/categoryUtils';
+import { getCompunterNames } from '@/services/profileService';
+import { useSearchParams } from 'next/navigation';
+
 const PromptCategoryManager = () => {
-  const [form, setForm] = useState({ name: '' });
+  const [mounted, setMounted] = useState(false);
+  const [form, setForm] = useState({ name: '', owner: '' });
   const [error, setError] = useState('');
+  const queryParams = new URLSearchParams(window.location.search);
 
   const {categories, setCategories} = useCategories()
+  const [computerNames, setComputerNames] = useState([]);
   
   useEffect(() => {
     fetchCategories();
   }, []);
 
+  useEffect(() => {
+      setMounted(true);
+    }, []);
+  
+  useEffect(() => {
+    if (mounted) {
+      fetchComputerNames();
+    }
+  }, [mounted]);
+  
+
+  const fetchComputerNames = async () => {
+      try {
+          const data = await getCompunterNames();
+          setComputerNames(data);
+      } catch (err) {
+          console.error('Failed to load computer names');
+      }
+  };
+
+  
   const fetchCategories = async () => {
     try {
-      const data = await getPromptCategories();
+      debugger
+      const data = await getPromptCategories(queryParams.get('owner'));
       setCategories(data);
     } catch (err) {
       setError('Failed to load categories');
@@ -31,7 +59,7 @@ const PromptCategoryManager = () => {
     try {
       await createPromptCategory(form)
       
-      setForm({ name: '' });
+      setForm({ name: '', owner: '' });
       fetchCategories();
     } catch (err) {
       setError(err.message);
@@ -63,6 +91,21 @@ const PromptCategoryManager = () => {
           required
           style={{ width: '100%', padding: 8 }}
         />
+
+        <select   value={form.owner}
+            style={{ width: '100%', padding: 8 }}
+
+          onChange={handleChange} name="owner" required={true}>
+            <option value="">ALL</option>
+            {computerNames.map((c) => (
+                <option key={c} value={c}>
+                    {c}
+                </option>
+            ))}
+
+        </select>
+
+
         <button type="submit" style={{ marginTop: 8 }}>
               Add
         </button>

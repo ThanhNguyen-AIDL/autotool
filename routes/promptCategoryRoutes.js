@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const PromptCategory = require('../models/PromptCategory');
+const { Op } =require("sequelize");
 
 // Create
 router.post('/', async (req, res) => {
@@ -14,8 +15,20 @@ router.post('/', async (req, res) => {
 
 // Read All
 router.get('/', async (req, res) => {
-   try {
-    const list = await PromptCategory.findAll();
+  try {
+    const { owner } = req.query; // ?owner=alice
+
+    const where = owner
+      ? {
+          [Op.or]: [
+            { owner: null },
+            { owner }
+          ]
+        }
+      : { owner: null }; // if no input, just null
+
+    const list = await PromptCategory.findAll({ where });
+
     res.json(list);
   } catch (err) {
     res.status(400).json({ error: err.message });
