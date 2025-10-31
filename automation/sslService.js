@@ -113,7 +113,7 @@ async function postToTokenBar(page, postContent, category = '', title = '', imag
     }
     
     // Wait 2 seconds after filling title
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    await new Promise(resolve => setTimeout(resolve, 7000));
     
     // Fill in the body content (with image if provided)
     const bodyFilled = await page.evaluate((content, imageData) => {
@@ -136,7 +136,7 @@ async function postToTokenBar(page, postContent, category = '', title = '', imag
     }
     
     // Wait 2 seconds after filling body
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    await new Promise(resolve => setTimeout(resolve, 7000));
     
     // Look for and click the post button
     const postSubmitted = await page.evaluate(() => {
@@ -482,11 +482,14 @@ async function doSSLOperation({
     console.error('Error during SSL operation:', err.message);
     // Continue execution even if login fails
   } finally {
-    // Keep browser open for further operations
-    // Don't close here - let the caller decide when to close
+    if (browser && browser.isConnected()) {
+      try {
+        await browser.close();
+      } catch (closeErr) {
+        console.error('Failed to close browser after SSL operation:', closeErr.message);
+      }
+    }
   }
-
-  return browser;
 
 }
 

@@ -14,7 +14,7 @@ INSERT INTO emails (
     ssl_isverified,
     ssl_lastaction
 ) VALUES (
-    'mlpdmhrp1@sharklasers.com', -- email (updated to new account)
+    'hello@sharklasers.com', -- email (updated to new account)
     true,                       -- iscreated
     false,                      -- isverified (CMC verification)
     0,                          -- verifycount
@@ -32,4 +32,4 @@ INSERT INTO emails (
     domain = EXCLUDED.domain;
 
 -- Add comment for the test record
-COMMENT ON COLUMN emails.ssl_isverified IS 'Test record: abctest1@sharklasers.com with password TopOne1990@'; 
+COMMENT ON COLUMN emails.ssl_isverified IS 'Test record: hello@sharklasers.comwith password TopOne1990@'; 

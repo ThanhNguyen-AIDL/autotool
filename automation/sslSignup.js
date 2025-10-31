@@ -4,6 +4,7 @@ const axios = require('axios');
 const puppeteer = require('puppeteer-extra');
 const StealthPlugin = require('puppeteer-extra-plugin-stealth');
 const logger = require('../middlewares/logger');
+const ProfileEmail = require('../models/ProfileEmail');
 
 puppeteer.use(StealthPlugin());
 
@@ -131,46 +132,48 @@ async function waitForVerificationCode(
  * @param {string} code
  */
 async function fillVerificationCode(page, code) {
-  // Try direct inputs first
+  logger.info({ message: 'Attempting to fill verification code', code });
+  
+  // Wait a bit for the form to fully render
+  await delay(2000);
+  
+  // Find the OTP container with flex.gap-2 (Sosovalue pattern)
+  const otpContainer = await page.$('div.flex.gap-2');
+  if (otpContainer) {
+    logger.info({ message: 'Found OTP container' });
+    
+    // Click on first span to focus
+    const firstSpan = await otpContainer.$('span');
+    if (firstSpan) {
+      await firstSpan.click();
+      await delay(500);
+    }
+    
+    // Type the code using keyboard
+    await page.keyboard.type(code, { delay: 100 });
+    
+    logger.info({ message: 'Verification code typed into OTP container' });
+    await delay(1500);
+    return;
+  }
+
+  // Try direct inputs
   const singleInput = await page.$('input[placeholder*="code" i], input[name*="code" i], input[autocomplete*="one-time-code" i]');
   if (singleInput) {
+    logger.info({ message: 'Found single code input field' });
     await singleInput.click({ clickCount: 3 });
     await singleInput.type(code, { delay: 50 });
     return;
   }
 
+  // Try individual digit inputs
   const digitInputs = await page.$$('input[maxlength="1"], input[data-testid*="otp"], input[aria-label*="digit" i]');
   if (digitInputs.length >= code.length) {
+    logger.info({ message: 'Found individual digit inputs', count: digitInputs.length });
     for (let i = 0; i < code.length; i += 1) {
       await digitInputs[i].type(code[i], { delay: 80 });
     }
     return;
-  }
-
-  // Sosovalue renders an invisible input in the container
-  const otpContainer = await page.$('.flex.gap-2');
-  if (otpContainer) {
-    const hiddenInput = await otpContainer.$('input');
-    if (hiddenInput) {
-      await hiddenInput.focus();
-      await hiddenInput.evaluate((el) => {
-        el.value = '';
-        el.dispatchEvent(new Event('input', { bubbles: true }));
-      });
-      await hiddenInput.type(code, { delay: 80 });
-      return;
-    }
-
-    const spanDigits = await otpContainer.$$('span');
-    if (spanDigits.length >= code.length) {
-      try {
-        await spanDigits[0].click({ clickCount: 1 });
-      } catch (e) {
-        // ignore
-      }
-      await page.keyboard.type(code, { delay: 80 });
-      return;
-    }
   }
 
   throw new Error('Unable to locate verification code input fields');
@@ -213,7 +216,7 @@ async function clickByText(page, pattern, { preferLast = false, timeout = 30000 
       return true;
     }
 
-    await page.waitForTimeout(250);
+    await delay(250);
   }
 
   return false;
@@ -225,12 +228,14 @@ async function clickByText(page, pattern, { preferLast = false, timeout = 30000 
  * @param {string} [options.password] Password to use (default from env or fallback)
  * @param {string} [options.profileName] Puppeteer profile folder name
  * @param {number} [options.codeTimeoutMs] Max time to wait for verification email
+ * @param {string} [options.computerName] Computer name to associate with this account
  * @returns {Promise<{ email: string, password: string }>}
  */
 async function createSSLAccount({
   password = DEFAULT_PASSWORD,
   profileName = `ssl-signup-${Date.now()}`,
   codeTimeoutMs = 120000,
+  computerName = 'default',
 } = {}) {
   const chromePath = process.env.CHROME_PATH || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
   const profilePath = path.resolve(process.cwd(), 'profiles', profileName);
@@ -349,14 +354,34 @@ async function createSSLAccount({
     const verificationCode = await codePromise;
 
     await fillVerificationCode(page, verificationCode);
-
-    const verifyClicked = await clickByText(page, /verify|confirm|submit/i);
-    if (!verifyClicked) {
-      // If there is no explicit verify button, try submitting via Enter key
-      await page.keyboard.press('Enter');
-    }
-
+    
+    // Wait for successful signup (redirect or success message)
+    await delay(3000);
+    
     logger.info({ message: 'SSL account created successfully', email });
+    
+    // Save account to database
+    try {
+      await ProfileEmail.create({
+        email: email,
+        iscreated: true,
+        isverified: false,           // CMC verification
+        verifycount: 0,
+        lastaction: 0,                // CMC last action
+        lasttraining: 0,
+        computername: computerName,
+        ismain: false,
+        domain: email.split('@')[1],  // Extract domain from email
+        ssl_isverified: true,         // SSL verification - set to true
+        ssl_lastaction: 0,            // SSL last action
+      });
+      
+      logger.info({ message: 'SSL account saved to database', email, computerName });
+    } catch (dbError) {
+      logger.error({ message: 'Failed to save SSL account to database', email, error: dbError.message });
+      // Don't throw - account was created successfully, just db save failed
+    }
+    
     return { email, password };
   } finally {
     if (browser && browser.isConnected()) {

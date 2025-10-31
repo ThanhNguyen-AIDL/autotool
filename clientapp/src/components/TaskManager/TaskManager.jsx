@@ -8,7 +8,7 @@ import { getContent } from '@/services/contentService';
 
 import React, { useEffect, useState, useRef } from 'react';
 import { postArticleCMC } from '@/services/cmcService';
-import { postArticleSSL } from '@/services/sslService';
+import { postArticleSSL, signupSSLAccount } from '@/services/sslService';
 import { checkCooldown } from '@/services/cooldownService';
 import LogViewer from '../LogViewer/LogViewer';
 import { getLogsByName } from '@/services/logService';
@@ -26,6 +26,8 @@ const TaskManager = () => {
     const [isRunning, setIsRunning] = useState(false);
     const [intervalId, setIntervalId] = useState(null);
     const [intervalMinutes, setIntervalMinutes] = useState(10);
+    const [isSslRunning, setIsSslRunning] = useState(false);
+    const [sslIntervalId, setSslIntervalId] = useState(null);
     const [sslTitle, setSslTitle] = useState('');
     const [showSslTitleInput, setShowSslTitleInput] = useState(false);
     const [sslImage, setSslImage] = useState(null);
@@ -34,6 +36,12 @@ const TaskManager = () => {
     const [categoryTags, setCategoryTags] = useState({});
     const [cmcImage, setCmcImage] = useState(null);
     const [cmcImagePreview, setCmcImagePreview] = useState('');
+    const [signupLoading, setSignupLoading] = useState(false);
+    const [signupResult, setSignupResult] = useState(null);
+    const [signupError, setSignupError] = useState('');
+    const [isSignupRunning, setIsSignupRunning] = useState(false);
+    const [signupIntervalId, setSignupIntervalId] = useState(null);
+    const [signupIntervalMinutes, setSignupIntervalMinutes] = useState(30); // Default 30 minutes
     const logManager = useLogManager()
     const queryParams = new URLSearchParams(window.location.search);
 
@@ -81,8 +89,10 @@ const TaskManager = () => {
     useEffect(() => {
         return () => {
             if (intervalId) clearInterval(intervalId);
+            if (sslIntervalId) clearInterval(sslIntervalId);
+            if (signupIntervalId) clearInterval(signupIntervalId);
         };
-    }, [intervalId]);
+    }, [intervalId, sslIntervalId, signupIntervalId]);
 
     /**
      * Update tag for a specific category
@@ -94,6 +104,26 @@ const TaskManager = () => {
             ...prev,
             [category]: tag
         }));
+    };
+
+    const handleSignupSSLAccount = async () => {
+        setSignupLoading(true);
+        setSignupError('');
+        setSignupResult(null);
+
+        try {
+            const payload = {};
+            if (selectedPC) {
+                payload.profileName = `${selectedPC}-ssl-${Date.now()}`;
+            }
+            const result = await signupSSLAccount(payload);
+            setSignupResult(result);
+        } catch (err) {
+            const message = err?.response?.data?.error || err.message || 'Failed to create SSL account';
+            setSignupError(message);
+        } finally {
+            setSignupLoading(false);
+        }
     };
 
     const fetchComputerNames = async () => {
@@ -277,9 +307,55 @@ const TaskManager = () => {
     };
 
     const handleStop = () => {
-        clearInterval(intervalId);
+        if (intervalId) {
+            clearInterval(intervalId);
+        }
         setIntervalId(null);
         setIsRunning(false);
+    };
+
+    const handleStartSSL = () => {
+        if (isSslRunning || !selectedPC || selectedCategories.length === 0) return;
+
+        handlePostSSL();
+
+        const id = setInterval(() => {
+            handlePostSSL();
+        }, intervalMinutes * 60 * 1000);
+
+        setSslIntervalId(id);
+        setIsSslRunning(true);
+    };
+
+    const handleStopSSL = () => {
+        if (sslIntervalId) {
+            clearInterval(sslIntervalId);
+        }
+        setSslIntervalId(null);
+        setIsSslRunning(false);
+    };
+
+    const handleStartSignup = () => {
+        if (isSignupRunning || !selectedPC) return;
+
+        // Create first account immediately
+        handleSignupSSLAccount();
+
+        // Set up interval for creating accounts
+        const id = setInterval(() => {
+            handleSignupSSLAccount();
+        }, signupIntervalMinutes * 60 * 1000);
+
+        setSignupIntervalId(id);
+        setIsSignupRunning(true);
+    };
+
+    const handleStopSignup = () => {
+        if (signupIntervalId) {
+            clearInterval(signupIntervalId);
+        }
+        setSignupIntervalId(null);
+        setIsSignupRunning(false);
     };
 
     const handleImageUpload = (event) => {
@@ -570,7 +646,7 @@ const TaskManager = () => {
                         </div>
                     )}
                     <div style={{ marginTop: 30 }}>
-                        <label>Interval:</label>
+                        <label>Interval (minutes):</label>
                         <select
                             value={intervalMinutes}
                             onChange={(e) => setIntervalMinutes(Number(e.target.value))}
@@ -583,21 +659,127 @@ const TaskManager = () => {
                             ))}
                         </select>
 
-                        <button
-                            style={{ marginLeft: 20, backgroundColor: isRunning ? '#faad14' : '#52c41a' }}
-                            onClick={handleStart}
-                            disabled={isRunning}
-                        >
-                            {isRunning ? 'Running...' : 'Start Job'}
-                        </button>
+                        <div style={{ marginTop: 15 }}>
+                            <strong>CMC Scheduler</strong>
+                            <button
+                                style={{ marginLeft: 20, backgroundColor: isRunning ? '#faad14' : '#52c41a' }}
+                                onClick={handleStart}
+                                disabled={isRunning}
+                            >
+                                {isRunning ? 'Running...' : 'Start Job'}
+                            </button>
 
-                        <button
-                            style={{ marginLeft: 10, backgroundColor: '#f5222d', color: '#fff' }}
-                            onClick={handleStop}
-                            disabled={!isRunning}
-                        >
-                            Stop Job
-                        </button>
+                            <button
+                                style={{ marginLeft: 10, backgroundColor: '#f5222d', color: '#fff' }}
+                                onClick={handleStop}
+                                disabled={!isRunning}
+                            >
+                                Stop Job
+                            </button>
+                        </div>
+
+                        <div style={{ marginTop: 15 }}>
+                            <strong>SSL Scheduler</strong>
+                            <button
+                                style={{ marginLeft: 20, backgroundColor: isSslRunning ? '#faad14' : '#1890ff', color: '#fff' }}
+                                onClick={handleStartSSL}
+                                disabled={isSslRunning}
+                            >
+                                {isSslRunning ? 'Running...' : 'Start SSL Job'}
+                            </button>
+
+                            <button
+                                style={{ marginLeft: 10, backgroundColor: '#f5222d', color: '#fff' }}
+                                onClick={handleStopSSL}
+                                disabled={!isSslRunning}
+                            >
+                                Stop SSL Job
+                            </button>
+                        </div>
+
+                        <div style={{ marginTop: 20 }}>
+                            <strong>SSL Account Provisioning</strong>
+                            <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 12 }}>
+                                {/* Manual account creation */}
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                    <button
+                                        onClick={handleSignupSSLAccount}
+                                        disabled={signupLoading || isSignupRunning}
+                                        style={{
+                                            padding: '6px 14px',
+                                            backgroundColor: signupLoading ? '#faad14' : '#722ed1',
+                                            color: '#fff',
+                                            border: 'none',
+                                            borderRadius: 4,
+                                            cursor: (signupLoading || isSignupRunning) ? 'not-allowed' : 'pointer',
+                                            opacity: isSignupRunning ? 0.5 : 1
+                                        }}
+                                    >
+                                        {signupLoading ? 'Creating account…' : 'Create SSL Account'}
+                                    </button>
+                                    {signupResult?.email && (
+                                        <span style={{ color: '#389e0d', fontSize: 12 }}>
+                                            Created: {signupResult.email} (pwd: {signupResult.password})
+                                        </span>
+                                    )}
+                                    {signupError && (
+                                        <span style={{ color: '#f5222d', fontSize: 12 }}>
+                                            Error: {signupError}
+                                        </span>
+                                    )}
+                                </div>
+
+                                {/* Automatic account creation scheduler */}
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 8 }}>
+                                    <label style={{ fontSize: 14 }}>
+                                        Auto-create interval (minutes):
+                                        <input
+                                            type="number"
+                                            value={signupIntervalMinutes}
+                                            onChange={(e) => setSignupIntervalMinutes(Number(e.target.value))}
+                                            disabled={isSignupRunning}
+                                            min="5"
+                                            max="1440"
+                                            style={{
+                                                marginLeft: 8,
+                                                padding: '4px 8px',
+                                                width: 80,
+                                                border: '1px solid #d9d9d9',
+                                                borderRadius: 4
+                                            }}
+                                        />
+                                    </label>
+                                    <button
+                                        onClick={handleStartSignup}
+                                        disabled={isSignupRunning || !selectedPC}
+                                        style={{
+                                            padding: '6px 14px',
+                                            backgroundColor: isSignupRunning ? '#52c41a' : '#1890ff',
+                                            color: '#fff',
+                                            border: 'none',
+                                            borderRadius: 4,
+                                            cursor: (isSignupRunning || !selectedPC) ? 'not-allowed' : 'pointer'
+                                        }}
+                                    >
+                                        {isSignupRunning ? 'Running...' : 'Start Auto-Create'}
+                                    </button>
+                                    <button
+                                        onClick={handleStopSignup}
+                                        disabled={!isSignupRunning}
+                                        style={{
+                                            padding: '6px 14px',
+                                            backgroundColor: '#f5222d',
+                                            color: '#fff',
+                                            border: 'none',
+                                            borderRadius: 4,
+                                            cursor: !isSignupRunning ? 'not-allowed' : 'pointer'
+                                        }}
+                                    >
+                                        Stop Auto-Create
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     <LogViewer/>
                 </div>

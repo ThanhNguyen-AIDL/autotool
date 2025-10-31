@@ -67,6 +67,7 @@ class CooldownRepository {
         if (!existing) { return true }
 
         return now - existing?.last_run >= existing?.cooldown_period;
+        // return true;
 
     }
 

@@ -1,14 +1,14 @@
 # Chrome Profile Manager - Automated Social Media Tool
 
-A comprehensive web application for managing Chrome browser profiles and automating social media interactions, specifically designed for CoinMarketCap community engagement.
+A comprehensive web application for managing Chrome browser profiles and automating social media interactions, with workflows tailored for CoinMarketCap Community and Sosovalue (TokenBar).
 
 ## 🚀 Features
 
 ### Core Functionality
 - **Chrome Profile Management**: Create, edit, delete, and launch Chrome browser profiles
 - **Automated Social Media Posting**: Automated posting to CoinMarketCap community
-- **Main Account Tagging for CMC Posts**: Optionally tag a main account in CMC posts. The system will post 'follow our channel at' on one line, then the tag (e.g., @mainaccount) on the next line, before the main content.
-- **AI Content Generation**: Integration with Azure OpenAI for dynamic content creation
+- **Main Account Tagging for CMC Posts**: Optionally prepend `follow our channel at @mainaccount` ahead of the generated content.
+- **AI Content Generation**: Uses GitHub Models (OpenAI `gpt-4.1-mini` via the GitHub Inference API) to draft post copy
 - **Task Scheduling**: Automated task execution with configurable intervals
 - **Cooldown Management**: Rate limiting to prevent account suspension
 - **Logging System**: Comprehensive activity tracking and monitoring
@@ -16,7 +16,7 @@ A comprehensive web application for managing Chrome browser profiles and automat
 
 ### Key Components
 - **Profile Manager**: Manage browser profiles with authentication details
-- **Content Writer**: AI-powered content generation using Azure OpenAI
+- **Content Writer**: AI-powered content generation backed by the GitHub Models chat completion API
 - **Task Manager**: Schedule and automate posting tasks
 - **Prompt Management**: Organize and manage AI prompts by categories
 - **Cooldown Manager**: Configure rate limits per computer/category
@@ -28,7 +28,7 @@ A comprehensive web application for managing Chrome browser profiles and automat
 - **Server**: Express.js REST API with Swagger documentation
 - **Database**: PostgreSQL with Sequelize ORM
 - **Automation**: Puppeteer for browser automation
-- **AI Integration**: Azure OpenAI for content generation
+- **AI Integration**: GitHub Models chat completions for content generation
 - **Logging**: Pino logger with structured logging
 - **Image Uploads**: Supports large payloads (up to 50MB) for SSL image posts
 
@@ -43,7 +43,7 @@ A comprehensive web application for managing Chrome browser profiles and automat
 - Node.js (v18 or higher)
 - PostgreSQL database
 - Google Chrome browser
-- Azure OpenAI API access
+- GitHub Models access token (`GITHUB_TOKEN`)
 
 ## 🛠️ Installation
 
@@ -74,8 +74,8 @@ A comprehensive web application for managing Chrome browser profiles and automat
    DB_PASSWORD=your_password
    DB_NAME=your_database_name
    
-   # Azure OpenAI Configuration
-   GITHUB_TOKEN=your_azure_openai_token
+   # GitHub Models (chat completions) token
+   GITHUB_TOKEN=your_github_models_token
    ```
 
 4. **Database Setup**
@@ -84,7 +84,11 @@ A comprehensive web application for managing Chrome browser profiles and automat
    -- sql/V2.0__create_promt_category_table.sql
    -- sql/V3.0__create_promt_table.sql
    -- sql/V4.0__create_cooldown_table.sql
+   -- sql/V5.0__add_ssl_columns_to_emails.sql
+   -- sql/V6.0__insert_ssl_test_record.sql
    ```
+
+   A helper script (`node scripts/run-ssl-migration.js`) is available if you prefer to add the SSL columns programmatically.
 
 ## 🚀 Usage
 
@@ -125,12 +129,7 @@ A comprehensive web application for managing Chrome browser profiles and automat
    - Configure automated posting tasks
    - Set intervals for task execution
    - Monitor task execution through logs
-   - **Tagging Main Account in CMC Posts**: In the Task Manager, enter a main account tag (e.g., @mainaccount) in the 'Main Account Tag' field. When posting to CMC, the system will add:
-
-     follow our channel at
-     @mainaccount
-
-   before the main post content, each on a separate line.
+   - **Tagging Main Account in CMC Posts**: In the Task Manager, enter a main account tag (e.g., `@mainaccount`). When posting to CMC, the system prepends `follow our channel at @mainaccount` ahead of the generated body.
 
 4. **Cooldown Management**
    - Configure rate limits per computer and category
@@ -194,7 +193,7 @@ autotool/
 - **SSL Image Posting**: Posts images as part of the Sosovalue post body
 
 ### Content Generation
-- Azure OpenAI integration for dynamic content
+- GitHub Models integration (OpenAI `gpt-4.1-mini`) for dynamic content
 - Category-based prompt management
 - Random content selection for variety
 - Trending token integration
@@ -202,7 +201,7 @@ autotool/
 ### Task Scheduling
 - Configurable posting intervals
 - Category rotation for content variety
-- Cooldown enforcement
+- Cooldown enforcement (defaults to 30 minutes per PC/category, configurable in the Cooldown manager)
 - Error handling and retry logic
 
 ## 📊 Monitoring and Logging
@@ -231,7 +230,7 @@ autotool/
 
 1. **Chrome Path**: Update the Chrome executable path in `automation/launcher.js` for your operating system
 2. **Database**: Ensure PostgreSQL is running and accessible
-3. **API Keys**: Secure your Azure OpenAI API keys
+3. **API Keys**: Secure your GitHub Models API token (`GITHUB_TOKEN`)
 4. **Rate Limiting**: Configure appropriate cooldown periods to avoid account suspension
 5. **Compliance**: Ensure compliance with platform terms of service
 6. **Image Uploads**: Large images are supported for SSL posts (up to 50MB payload)
@@ -241,7 +240,7 @@ autotool/
 ### Common Issues
 1. **Chrome not launching**: Check Chrome executable path
 2. **Database connection**: Verify PostgreSQL credentials
-3. **API errors**: Check Azure OpenAI token validity
+3. **API errors**: Verify that `GITHUB_TOKEN` is set and valid
 4. **Port conflicts**: Ensure ports 8000 and 8001 are available
 5. **Empty post content**: If your SSL post is missing text, check the browser and server logs for debugging output. Make sure the AI content generation is working and returning non-empty content. See the Task Manager console for details.
 

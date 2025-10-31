@@ -4,6 +4,7 @@ const { getProfileByOwner, markLastAction, getProfileByEmail } = require('../rep
 const { getProfileByOwner: getSSLProfileByOwner, markLastAction: markSSLLastAction } = require('../repositories/SSLProfileRepository');
 const {doPostArticleCMC } =require('../automation/cmcService')
 const { doSSLOperation } =require('../automation/sslService')
+const { createSSLAccount } = require('../automation/sslSignup');
 const { launchProfile } =require('../automation/launcher')
 const logger = require('../middlewares/logger');
 const { launchProfileByUrl, launchCMCbyEmail } = require('../automation/worker');
@@ -99,6 +100,30 @@ router.post('/launchbyemail', async (req, res) => {
 
     res.json({ success: true });
   } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+router.post('/signupssl', async (req, res) => {
+  const { password, profileName, codeTimeoutMs } = req.body || {};
+
+  try {
+    // Extract computer name from profileName (format: "computerName-ssl-timestamp")
+    let computerName = 'default';
+    if (profileName) {
+      const parts = profileName.split('-ssl-');
+      if (parts.length > 0) {
+        computerName = parts[0]; // Extract computer name before "-ssl-"
+      }
+    }
+
+    logger.info({ step: 'ssl_signup_start', computerName, profileName });
+
+    const created = await createSSLAccount({ password, profileName, codeTimeoutMs, computerName });
+    logger.info({ step: 'ssl_signup', email: created.email, computerName });
+    res.json({ success: true, ...created });
+  } catch (e) {
+    logger.error({ step: 'ssl_signup_failed', error: e.message });
     res.status(500).json({ error: e.message });
   }
 });
