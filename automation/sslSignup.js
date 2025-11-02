@@ -246,15 +246,18 @@ async function createSSLAccount({
 
   const { email, sidToken } = await createTempInbox();
 
-  const browser = await puppeteer.launch({
-    userDataDir: profilePath,
-    executablePath: chromePath,
-    headless: false,
-    args: ['--start-maximized'],
-    defaultViewport: null,
-  });
+  let browser = null;
+  let signupSuccessful = false;
 
   try {
+    browser = await puppeteer.launch({
+      userDataDir: profilePath,
+      executablePath: chromePath,
+      headless: false,
+      args: ['--start-maximized'],
+      defaultViewport: null,
+    });
+
     const pages = await browser.pages();
     const page = pages.length > 0 ? pages[0] : await browser.newPage();
 
@@ -343,7 +346,6 @@ async function createSSLAccount({
       throw new Error('Unable to locate Next button on signup form');
     }
     
-
     const codePromise = waitForVerificationCode(sidToken, { timeoutMs: codeTimeoutMs });
 
     // await page.waitForSelector(
@@ -360,7 +362,10 @@ async function createSSLAccount({
     
     logger.info({ message: 'SSL account created successfully', email });
     
-    // Save account to database
+    // Mark signup as successful
+    signupSuccessful = true;
+    
+    // Save account to database with ssl_isverified=true since verification completed
     try {
       await ProfileEmail.create({
         email: email,
@@ -383,6 +388,35 @@ async function createSSLAccount({
     }
     
     return { email, password };
+  } catch (signupError) {
+    logger.error({ message: 'SSL signup failed', error: signupError.message, email });
+    
+    // If signup failed (captcha, timeout, etc.), save account with ssl_isverified=false
+    // so it won't be used for posting
+    if (email && !signupSuccessful) {
+      try {
+        await ProfileEmail.create({
+          email: email,
+          iscreated: true,
+          isverified: false,
+          verifycount: 0,
+          lastaction: 0,
+          lasttraining: 0,
+          computername: computerName,
+          ismain: false,
+          domain: email.split('@')[1],
+          ssl_isverified: false,      // Mark as unverified
+          ssl_lastaction: 0,
+        });
+        
+        logger.info({ message: 'Failed SSL account saved to database as unverified', email, computerName });
+      } catch (dbError) {
+        logger.error({ message: 'Failed to save failed SSL account to database', email, error: dbError.message });
+      }
+    }
+    
+    // Re-throw the error so the route can return error to client
+    throw signupError;
   } finally {
     if (browser && browser.isConnected()) {
       await browser.close();

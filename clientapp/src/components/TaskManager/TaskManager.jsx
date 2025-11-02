@@ -28,12 +28,13 @@ const TaskManager = () => {
     const [intervalMinutes, setIntervalMinutes] = useState(10);
     const [isSslRunning, setIsSslRunning] = useState(false);
     const [sslIntervalId, setSslIntervalId] = useState(null);
-    const [sslTitle, setSslTitle] = useState('');
     const [showSslTitleInput, setShowSslTitleInput] = useState(false);
     const [sslImage, setSslImage] = useState(null);
     const [sslImagePreview, setSslImagePreview] = useState('');
     // Replace single mainAccountTag with category-specific tags
     const [categoryTags, setCategoryTags] = useState({});
+    // Category-specific SSL titles
+    const [categoryTitles, setCategoryTitles] = useState({});
     const [cmcImage, setCmcImage] = useState(null);
     const [cmcImagePreview, setCmcImagePreview] = useState('');
     const [signupLoading, setSignupLoading] = useState(false);
@@ -43,7 +44,7 @@ const TaskManager = () => {
     const [signupIntervalId, setSignupIntervalId] = useState(null);
     const [signupIntervalMinutes, setSignupIntervalMinutes] = useState(30); // Default 30 minutes
     const logManager = useLogManager()
-    const queryParams = new URLSearchParams(window.location.search);
+    const queryParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : new URLSearchParams();
 
     // Refs to hold latest state
     const selectedCategoriesRef = useRef([]);
@@ -51,6 +52,7 @@ const TaskManager = () => {
     const selectedPCRef = useRef();
     const currentCategoryIndexRef = useRef(0);
     const categoryTagsRef = useRef({});
+    const categoryTitlesRef = useRef({});
 
     const [collapsedCategories, setCollapsedCategories] = useState(true);
 
@@ -87,6 +89,10 @@ const TaskManager = () => {
     }, [categoryTags]);
 
     useEffect(() => {
+        categoryTitlesRef.current = categoryTitles;
+    }, [categoryTitles]);
+
+    useEffect(() => {
         return () => {
             if (intervalId) clearInterval(intervalId);
             if (sslIntervalId) clearInterval(sslIntervalId);
@@ -103,6 +109,18 @@ const TaskManager = () => {
         setCategoryTags(prev => ({
             ...prev,
             [category]: tag
+        }));
+    };
+
+    /**
+     * Update title for a specific category (SSL posts)
+     * @param {string} category - The category name
+     * @param {string} title - The title value to set
+     */
+    const updateCategoryTitle = (category, title) => {
+        setCategoryTitles(prev => ({
+            ...prev,
+            [category]: title
         }));
     };
 
@@ -187,10 +205,7 @@ const TaskManager = () => {
         const prompts = map[category] || [];
         const inputPrompt = prompts[Math.floor(Math.random() * prompts.length)];
 
-
-
         const cooldown = await checkCooldown(category, pc);
-
         
         if (!cooldown.allowed) {
             const nextIdx = (idx + 1) % selected.length;
@@ -201,30 +216,36 @@ const TaskManager = () => {
 
         if (inputPrompt?.name) {
             console.log(`📂 Processing category [${category}] with prompt ${inputPrompt.name}`);
-            const res = await getContent(inputPrompt.name);
-            const writerResponse = res?.data?.data;
+            
+            try {
+                const res = await getContent(inputPrompt.name);
+                const writerResponse = res?.data?.data;
 
-            console.log("article content", writerResponse);
+                console.log("article content", writerResponse);
 
-            // Get the tag for the current category
-            const currentCategoryTag = categoryTagsRef.current[category] || '';
+                // Get the tag for the current category
+                const currentCategoryTag = categoryTagsRef.current[category] || '';
 
-            await postArticleCMC({ 
-                owner: pc, 
-                category, 
-                postContent: writerResponse, 
-                mainAccountTag: currentCategoryTag,
-                ...(cmcImagePreview && { imageData: cmcImagePreview })
-            });
+                await postArticleCMC({ 
+                    owner: pc, 
+                    category, 
+                    postContent: writerResponse, 
+                    mainAccountTag: currentCategoryTag,
+                    ...(cmcImagePreview && { imageData: cmcImagePreview })
+                });
 
-  
-            const nextIdx = (idx + 1) % selected.length;
-            currentCategoryIndexRef.current = nextIdx;
-            setCurrentCategoryIndex(nextIdx);
+                // Only move to next category if post was successful
+                const nextIdx = (idx + 1) % selected.length;
+                currentCategoryIndexRef.current = nextIdx;
+                setCurrentCategoryIndex(nextIdx);
 
-            getLogsByName(logManager.selectedFile)
-                  .then(data => logManager.setLogRows(data.logs))
-                  .catch(console.error)
+                getLogsByName(logManager.selectedFile)
+                      .then(data => logManager.setLogRows(data.logs))
+                      .catch(console.error)
+            } catch (error) {
+                console.error(`❌ CMC post failed for category [${category}]:`, error);
+                // Don't move to next category - stay on current category to retry next interval
+            }
         }
     };
 
@@ -258,38 +279,50 @@ const TaskManager = () => {
 
         if (inputPrompt?.name) {
             console.log(`📂 Processing SSL category [${category}] with prompt ${inputPrompt.name}`);
-            const res = await getContent(inputPrompt.name);
-            const writerResponse = res?.data?.data;
+            
+            try {
+                const res = await getContent(inputPrompt.name);
+                const writerResponse = res?.data?.data;
 
-            console.log("SSL article content", writerResponse);
-            console.log("Full response from getContent:", res);
+                console.log("SSL article content", writerResponse);
+                console.log("Full response from getContent:", res);
 
-            // Check if content generation failed
-            if (!writerResponse || writerResponse.trim() === '') {
-                console.error("❌ Content generation failed or returned empty content");
-                console.log("Response structure:", JSON.stringify(res, null, 2));
-                return;
+                // Check if content generation failed
+                if (!writerResponse || writerResponse.trim() === '') {
+                    console.error("❌ Content generation failed or returned empty content");
+                    console.log("Response structure:", JSON.stringify(res, null, 2));
+                    // Don't move to next category - retry this category on next interval
+                    return;
+                }
+
+                // Get the title for the current category
+                const currentCategoryTitle = categoryTitlesRef.current[category] || '';
+
+                // Prepare SSL post data with title and image if provided
+                const sslPostData = {
+                    owner: pc,
+                    category,
+                    postContent: writerResponse,
+                    ...(currentCategoryTitle && { title: currentCategoryTitle }),
+                    ...(sslImagePreview && { imageData: sslImagePreview })
+                };
+
+                console.log("SSL post data being sent:", sslPostData);
+                await postArticleSSL(sslPostData);
+
+                // Only move to next category if post was successful
+                const nextIdx = (idx + 1) % selected.length;
+                currentCategoryIndexRef.current = nextIdx;
+                setCurrentCategoryIndex(nextIdx);
+
+                getLogsByName(logManager.selectedFile)
+                      .then(data => logManager.setLogRows(data.logs))
+                      .catch(console.error)
+            } catch (error) {
+                console.error(`❌ SSL post failed for category [${category}]:`, error);
+                // Don't move to next category - stay on current category to retry next interval
+                // This ensures we don't skip categories when errors occur (captcha, network, etc.)
             }
-
-            // Prepare SSL post data with title and image if provided
-            const sslPostData = {
-                owner: pc,
-                category,
-                postContent: writerResponse,
-                ...(sslTitle && { title: sslTitle }),
-                ...(sslImagePreview && { imageData: sslImagePreview })
-            };
-
-            console.log("SSL post data being sent:", sslPostData);
-            await postArticleSSL(sslPostData);
-
-            const nextIdx = (idx + 1) % selected.length;
-            currentCategoryIndexRef.current = nextIdx;
-            setCurrentCategoryIndex(nextIdx);
-
-            getLogsByName(logManager.selectedFile)
-                  .then(data => logManager.setLogRows(data.logs))
-                  .catch(console.error)
         }
     };
 
@@ -577,26 +610,35 @@ const TaskManager = () => {
                     </div>
 
                     {showSslTitleInput && (
-                        <div style={{ marginTop: 15, padding: 15, border: '1px solid #d9d9d9', borderRadius: 6, backgroundColor: '#fafafa' }}>
+                        <div style={{ marginTop: 15, padding: 15, border: '1px solid #d9d9d9', borderRadius: 6, backgroundColor: '#fff7e6' }}>
                             <label style={{ display: 'block', marginBottom: 8, fontWeight: 'bold' }}>
-                                SSL Post Title (optional):
+                                SSL Post Titles (for SSL posts):
                             </label>
-                            <input
-                                type="text"
-                                value={sslTitle}
-                                onChange={(e) => setSslTitle(e.target.value)}
-                                placeholder="Enter title for SSL post (e.g., Haccercoin.com)"
-                                style={{
-                                    width: '100%',
-                                    padding: '8px 12px',
-                                    border: '1px solid #d9d9d9',
-                                    borderRadius: 4,
-                                    fontSize: 14
-                                }}
-                            />
-                            <div style={{ marginTop: 8, fontSize: 12, color: '#666' }}>
-                                Format: "CATEGORY | TITLE" (e.g., "ICO | Haccercoin.com")
+                            <div style={{ marginTop: 8, fontSize: 12, color: '#666', marginBottom: 15 }}>
+                                Set specific titles for each selected category. Format: "CATEGORY | TITLE" (e.g., "ICO | Haccercoin.com")
                             </div>
+                            
+                            {/* Category-specific title inputs - only show for selected categories */}
+                            {selectedCategories.map(category => (
+                                <div key={category} style={{ marginBottom: 15 }}>
+                                    <label style={{ display: 'block', marginBottom: 5, fontWeight: 'bold', color: '#333' }}>
+                                        {category}:
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={categoryTitles[category] || ''}
+                                        onChange={(e) => updateCategoryTitle(category, e.target.value)}
+                                        placeholder={`Enter title for ${category} (e.g., ${category} | Project Name)`}
+                                        style={{
+                                            width: '100%',
+                                            padding: '8px 12px',
+                                            border: '1px solid #d9d9d9',
+                                            borderRadius: 4,
+                                            fontSize: 14
+                                        }}
+                                    />
+                                </div>
+                            ))}
                             
                             <div style={{ marginTop: 20 }}>
                                 <label style={{ display: 'block', marginBottom: 8, fontWeight: 'bold' }}>
